@@ -352,21 +352,6 @@ let idleTime = 0;
 
 window.addEventListener("scroll", () => { target = window.scrollY; }, { passive: true });
 
-// horizontal scrolling rides forward too: swipe right = pedal on
-window.addEventListener("wheel", (e) => {
-  if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-    e.preventDefault();
-    window.scrollBy(0, e.deltaX);
-  }
-}, { passive: false });
-
-// arrow keys: → forward, ← back
-window.addEventListener("keydown", (e) => {
-  if (e.target.closest?.("input, textarea, button, a")) return;
-  if (e.key === "ArrowRight") { e.preventDefault(); window.scrollBy({ top: 260, behavior: "smooth" }); }
-  if (e.key === "ArrowLeft") { e.preventDefault(); window.scrollBy({ top: -260, behavior: "smooth" }); }
-});
-
 function frame(now) {
   current = lerp(current, target, reducedMotion ? 1 : 0.085);
   const velocity = current - prev;

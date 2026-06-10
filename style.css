@@ -18,8 +18,6 @@ body {
   color: var(--ink);
   background: var(--pine);
   overflow-x: hidden;
-  /* keep horizontal swipes from triggering browser back-navigation */
-  overscroll-behavior-x: none;
 }
 
 .mono { font-family: var(--mono); }
