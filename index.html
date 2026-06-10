@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Benian Walls — Cybersecurity &amp; Global Policy</title>
+<meta name="description" content="Benian Walls — cybersecurity student at Indiana University. Scroll to ride through my experience, projects, and skills." />
+<!-- link preview card (Open Graph + Twitter) -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Benian Walls — Cybersecurity & Global Policy" />
+<meta property="og:description" content="Scroll to ride: an interactive mountain-bike trail through my experience, projects, and skills. Securing systems, shredding trails." />
+<meta property="og:url" content="https://benianwalls.github.io/" />
+<meta property="og:image" content="https://benianwalls.github.io/assets/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Benian Walls — Cybersecurity & Global Policy" />
+<meta name="twitter:description" content="An interactive resume: scroll to ride through the mountains." />
+<meta name="twitter:image" content="https://benianwalls.github.io/assets/og.png" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚵</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ===== FIXED PARALLAX SCENE ===== -->
+<div id="scene" aria-hidden="true">
+  <div class="sky"></div>
+  <div class="sky-night"></div>
+  <div id="stars"></div>
+  <div id="sun"></div>
+  <div class="layer" id="mtn-far"></div>
+  <div class="layer" id="mtn-mid"></div>
+  <div class="layer" id="mtn-near"></div>
+  <div class="layer" id="ground"></div>
+  <div class="layer" id="foreground"></div>
+
+  <!-- ===== THE BIKER ===== -->
+  <div id="biker">
+    <svg id="bike-svg" viewBox="0 0 200 145" xmlns="http://www.w3.org/2000/svg">
+      <!-- far leg (drawn behind frame) -->
+      <polyline id="leg-far" points="80,56 92,80 104,100" fill="none" stroke="#9a4f1e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="crank-far" x1="100" y1="103" x2="100" y2="119" stroke="#444" stroke-width="4" stroke-linecap="round"/>
+
+      <!-- rear wheel -->
+      <g class="wheel" id="wheel-rear">
+        <circle cx="45" cy="105" r="26" fill="none" stroke="#1c1f24" stroke-width="7"/>
+        <circle cx="45" cy="105" r="19" fill="none" stroke="#b6bec9" stroke-width="2"/>
+        <g class="spokes" data-cx="45" data-cy="105">
+          <line x1="45" y1="86" x2="45" y2="124" stroke="#b6bec9" stroke-width="1.6"/>
+          <line x1="26" y1="105" x2="64" y2="105" stroke="#b6bec9" stroke-width="1.6"/>
+          <line x1="31.6" y1="91.6" x2="58.4" y2="118.4" stroke="#b6bec9" stroke-width="1.6"/>
+          <line x1="31.6" y1="118.4" x2="58.4" y2="91.6" stroke="#b6bec9" stroke-width="1.6"/>
+        </g>
+        <circle cx="45" cy="105" r="3.4" fill="#ff7a3d"/>
+      </g>
+
+      <!-- front wheel -->
+      <g class="wheel" id="wheel-front">
+        <circle cx="155" cy="105" r="26" fill="none" stroke="#1c1f24" stroke-width="7"/>
+        <circle cx="155" cy="105" r="19" fill="none" stroke="#b6bec9" stroke-width="2"/>
+        <g class="spokes" data-cx="155" data-cy="105">
+          <line x1="155" y1="86" x2="155" y2="124" stroke="#b6bec9" stroke-width="1.6"/>
+          <line x1="136" y1="105" x2="174" y2="105" stroke="#b6bec9" stroke-width="1.6"/>
+          <line x1="141.6" y1="91.6" x2="168.4" y2="118.4" stroke="#b6bec9" stroke-width="1.6"/>
+          <line x1="141.6" y1="118.4" x2="168.4" y2="91.6" stroke="#b6bec9" stroke-width="1.6"/>
+        </g>
+        <circle cx="155" cy="105" r="3.4" fill="#ff7a3d"/>
+      </g>
+
+      <!-- frame -->
+      <g stroke="#ff7a3d" stroke-width="5" stroke-linecap="round" fill="none">
+        <line x1="45" y1="105" x2="100" y2="103"/>          <!-- chainstay -->
+        <line x1="100" y1="103" x2="78" y2="58"/>           <!-- seat tube -->
+        <line x1="78" y1="58" x2="45" y2="105"/>            <!-- seat stay -->
+        <line x1="100" y1="103" x2="140" y2="57"/>          <!-- down tube -->
+        <line x1="78" y1="60" x2="138" y2="55"/>            <!-- top tube -->
+        <line x1="142" y1="52" x2="155" y2="105"/>          <!-- fork -->
+      </g>
+      <circle cx="100" cy="103" r="6" fill="#2a2e35"/>      <!-- bb / chainring -->
+      <!-- saddle + bars -->
+      <line x1="70" y1="56" x2="86" y2="55" stroke="#1c1f24" stroke-width="6" stroke-linecap="round"/>
+      <line x1="140" y1="56" x2="147" y2="48" stroke="#1c1f24" stroke-width="5" stroke-linecap="round"/>
+
+      <!-- rider -->
+      <g id="rider">
+        <!-- torso -->
+        <path d="M 80 58 Q 96 40 120 35" fill="none" stroke="#2563a8" stroke-width="11" stroke-linecap="round"/>
+        <!-- arm -->
+        <polyline points="118,37 133,42 146,50" fill="none" stroke="#2563a8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- head -->
+        <circle cx="133" cy="28" r="8.5" fill="#e8b48a"/>
+        <!-- helmet -->
+        <path d="M 123 27 A 10.5 10.5 0 0 1 143.5 26 L 145 29 L 124 30 Z" fill="#ff7a3d"/>
+      </g>
+
+      <!-- near leg (drawn in front) -->
+      <line id="crank-near" x1="100" y1="103" x2="100" y2="87" stroke="#555" stroke-width="4" stroke-linecap="round"/>
+      <polyline id="leg-near" points="80,56 96,76 100,87" fill="none" stroke="#c2622a" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <ellipse id="foot-near" cx="100" cy="87" rx="6" ry="3.4" fill="#1c1f24"/>
+
+      <!-- headlight beam (appears at night) -->
+      <polygon id="headlight" points="150,55 200,38 200,72" fill="url(#beam)" opacity="0"/>
+      <defs>
+        <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#fff3b0" stop-opacity="0.85"/>
+          <stop offset="1" stop-color="#fff3b0" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div id="dust"></div>
+  </div>
+</div>
+
+<!-- progress bar -->
+<div id="trail-progress"><div id="trail-progress-fill"></div></div>
+
+<!-- badge counter -->
+<div id="hud" class="mono" title="Glowing badges are hidden along the trail — click them!">🏅 <span id="badge-count">0</span>/<span id="badge-total">7</span></div>
+
+<!-- hacker mode toggle (appears once all badges are collected) -->
+<button id="hack-toggle" class="mono" hidden>ENTER HACKER MODE</button>
+<div id="scanlines" aria-hidden="true"></div>
+
+<!-- all-badges-collected toast -->
+<div id="toast">
+  <strong>🏆 TRAIL MASTER</strong>
+  <p class="mono">All 7 badges collected — HACKER MODE unlocked.</p>
+</div>
+
+<!-- ===== SCROLLING CONTENT ===== -->
+<main>
+
+  <section class="panel hero" id="start">
+    <div class="hero-inner">
+      <p class="mono kicker">// TRAILHEAD</p>
+      <h1>BENIAN<br/>WALLS</h1>
+      <p class="subtitle">Cybersecurity &amp; Global Policy @ Indiana University</p>
+      <p class="tagline">Securing systems. Shredding trails.</p>
+      <a class="btn-resume mono" href="assets/BenianWalls-Resume.pdf" download>⬇ download resume</a>
+      <div class="scroll-hint">
+        <span class="mono">scroll to ride</span>
+        <span class="mono hint2">psst — click the rider, the trees &amp; the glowing badges</span>
+        <span class="chevron">▾</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="about">
+    <div class="card reveal">
+      <p class="mono kicker">MILE 01 — WHO'S RIDING</p>
+      <h2>About Me</h2>
+      <div class="about-flex">
+        <img class="portrait" src="assets/headshot.jpg" alt="Benian Walls" onerror="this.style.display='none'" />
+        <p>I'm a cybersecurity student at Indiana University's Luddy School of Informatics, Computing, and Engineering, pairing hands-on security work — vulnerability management, phishing simulation, SIEM monitoring — with the global policy side of how security shapes the world.</p>
+      </div>
+      <ul class="fact-list">
+        <li><span class="mono">📍</span> Bloomington, IN</li>
+        <li><span class="mono">🗣</span> Fluent in English &amp; Turkish</li>
+        <li><span class="mono">🏅</span> Hudson &amp; Holland Scholar — merit program for academic excellence &amp; leadership</li>
+        <li><span class="mono">🎓</span> Provost Scholarship recipient</li>
+        <li><span class="mono">🎣</span> Off the clock: fishing, traveling, and finding new trails</li>
+      </ul>
+      <div class="photo-strip">
+        <figure class="polaroid tilt-l">
+          <img src="assets/fishing.jpg" alt="Benian holding a freshly caught bass on a lake boardwalk" onerror="this.closest('.polaroid').style.display='none'" />
+          <figcaption class="mono">caught one 🎣</figcaption>
+        </figure>
+        <figure class="polaroid tilt-r">
+          <img src="assets/travel.jpg" alt="Benian in San Francisco with the Bay Bridge behind him" onerror="this.closest('.polaroid').style.display='none'" />
+          <figcaption class="mono">san francisco 🌉</figcaption>
+        </figure>
+        <figure class="polaroid tilt-l">
+          <img src="assets/bike.jpg" alt="Benian and a riding buddy holding their bikes in front of a covered bridge" onerror="this.closest('.polaroid').style.display='none'" />
+          <figcaption class="mono">actual trails 🚵</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="experience">
+    <div class="card reveal">
+      <p class="mono kicker">MILE 02 — THE CLIMB</p>
+      <h2>Experience</h2>
+
+      <div class="job club-job">
+        <img class="club-logo" src="assets/indianapolis_airport_authority_logo.jpeg" alt="Indianapolis Airport Authority logo" onerror="this.style.display='none'" />
+        <div class="club-body">
+        <div class="job-head">
+          <h3>Cybersecurity Intern</h3>
+          <span class="mono when">May 2026 — Present</span>
+        </div>
+        <p class="org">Indianapolis Airport Authority · Indianapolis, IN</p>
+        <ul>
+          <li>Support enterprise cybersecurity operations: vulnerability management, asset inventory oversight, risk assessments, and compliance-related security activities</li>
+          <li>Assist with SIEM monitoring, endpoint security management, threat investigation, and security awareness initiatives</li>
+        </ul>
+        </div>
+      </div>
+
+      <div class="job club-job">
+        <img class="club-logo" src="assets/byteshield_sol.jpeg" alt="ByteShield Solutions logo" onerror="this.style.display='none'" />
+        <div class="club-body">
+        <div class="job-head">
+          <h3>Contracted Security Solutions Specialist</h3>
+          <span class="mono when">Aug 2025 — Present</span>
+        </div>
+        <p class="org">ByteShield Solutions · Bloomington, IN</p>
+        <ul>
+          <li>Conducted Nessus scans, reporting 35+ high-risk issues per project with 95% remediation</li>
+          <li>Reviewed firewalls, devices, and network rules — reduced unauthorized access attempts by 40%</li>
+          <li>Built GoPhish phishing campaigns that cut risky clicks by 45%</li>
+        </ul>
+        </div>
+      </div>
+
+      <div class="job club-job">
+        <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" onerror="this.style.display='none'" />
+        <div class="club-body">
+        <div class="job-head">
+          <h3>Student IT Support <span class="badge">incoming</span></h3>
+          <span class="mono when">Aug 2026</span>
+        </div>
+        <p class="org">Indiana University UITS · Bloomington, IN</p>
+        <ul>
+          <li>Technical support for students, faculty, and staff across account, device, Wi-Fi, and software issues</li>
+        </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="projects">
+    <div class="card reveal">
+      <p class="mono kicker">MILE 03 — BUILDS</p>
+      <h2>Projects</h2>
+
+      <div class="project">
+        <h3>LLM Agent Security Lab <span class="mono tech">Python · Git</span></h3>
+        <p>Built a vulnerable-and-defended LLM-agent environment to evaluate indirect prompt injection, mock data exfiltration, system prompt leakage, and unsafe tool execution in a controlled sandbox. Implemented guardrails outside the model: least-privilege tool access, output encoding, and recipient restrictions.</p>
+        <a class="repo-link mono" href="https://github.com/benianwalls/llm-agent-security-lab" target="_blank" rel="noopener">view code on github ↗</a>
+      </div>
+
+      <div class="project">
+        <h3>Python Port Scanner <span class="mono tech">Python</span></h3>
+        <p>A Python tool that scans target IPs, identifies open ports, and assesses potential attack surfaces on target systems.</p>
+        <a class="repo-link mono" href="https://github.com/benianwalls/Port_Scanner" target="_blank" rel="noopener">view code on github ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="skills">
+    <div class="card reveal">
+      <p class="mono kicker">MILE 04 — GEAR CHECK</p>
+      <h2>Skills</h2>
+      <div class="skill-group">
+        <h4 class="mono">SECURITY &amp; NETWORKING</h4>
+        <div class="chips">
+          <span>Nessus</span><span>Nmap</span><span>GoPhish</span><span>Arctic Wolf</span><span>Tanium</span><span>Wireshark</span><span>OWASP Top 10</span><span>NIST</span><span>CIS Controls</span>
+        </div>
+      </div>
+      <div class="skill-group">
+        <h4 class="mono">PROGRAMMING &amp; SCRIPTING</h4>
+        <div class="chips">
+          <span>Python</span><span>SQL</span><span>Java</span><span>JavaScript</span><span>HTML</span><span>CSS</span>
+        </div>
+      </div>
+      <div class="skill-group">
+        <h4 class="mono">SYSTEMS &amp; TOOLS</h4>
+        <div class="chips">
+          <span>Linux</span><span>Kali Linux</span><span>Git / GitHub</span><span>Windows</span><span>macOS</span><span>Terminal</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="education">
+    <div class="card reveal">
+      <p class="mono kicker">MILE 05 — SUMMIT ROUTE</p>
+      <h2>Education &amp; Certs</h2>
+      <div class="job club-job">
+        <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" onerror="this.style.display='none'" />
+        <div class="club-body">
+        <div class="job-head">
+          <h3>B.S. Cybersecurity &amp; Global Policy</h3>
+          <span class="mono when">May 2028</span>
+        </div>
+        <p class="org">Indiana University — Luddy School of Informatics, Computing, and Engineering</p>
+        <ul>
+          <li>Minor: Central Eurasian Studies with Language</li>
+        </ul>
+        </div>
+      </div>
+      <div class="job club-job">
+        <img class="club-logo" src="assets/google.png" alt="Google logo" onerror="this.style.display='none'" />
+        <div class="club-body">
+        <div class="job-head">
+          <h3>Google Cybersecurity Certificate</h3>
+          <span class="mono when">Oct 2025</span>
+        </div>
+        <p class="org">Coursera</p>
+        <ul>
+          <li>Network security, risk management, threat analysis, incident response — hands-on with Linux, Wireshark, and SQL</li>
+        </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="leadership">
+    <div class="card reveal">
+      <p class="mono kicker">MILE 06 — RIDING WITH THE PACK</p>
+      <h2>Leadership</h2>
+      <div class="job club-job">
+        <img class="club-logo" src="assets/ingineering.jpg" alt="INgineering at IU club logo" onerror="this.style.display='none'" />
+        <div class="club-body">
+        <div class="job-head">
+          <h3>President — Ingineering Club</h3>
+          <span class="mono when">Apr 2026 — Present</span>
+        </div>
+        <p class="org">Indiana University</p>
+        <ul>
+          <li>Recruited and manage an executive board of 7 and a community of 400+ members</li>
+          <li>Run day-to-day operations: events, meetings, and project coordination</li>
+        </ul>
+        </div>
+      </div>
+      <div class="job club-job">
+        <img class="club-logo" src="assets/cyberclub.jpeg" alt="IU Cybersecurity Club logo" onerror="this.style.display='none'" />
+        <div class="club-body">
+        <div class="job-head">
+          <h3>Member — Cybersecurity Club</h3>
+          <span class="mono when">Sep 2024 — Present</span>
+        </div>
+        <p class="org">Indiana University</p>
+        <ul>
+          <li>Hands-on ethical hacking, threat analysis, and network defense; workshops on cloud security and malware analysis</li>
+        </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="contact">
+    <div class="card reveal contact-card">
+      <p class="mono kicker">// END OF TRAIL</p>
+      <h2>Let's Connect</h2>
+      <p>Open to internships, security projects, and a good ride.</p>
+      <div class="contact-links">
+        <a href="mailto:bwalls06@outlook.com" class="contact-btn">📧 bwalls06@outlook.com</a>
+        <a href="https://www.linkedin.com/in/benianwalls/" target="_blank" rel="noopener" class="contact-btn">💼 LinkedIn</a>
+        <a href="https://github.com/benianwalls" target="_blank" rel="noopener" class="contact-btn">🐙 GitHub</a>
+        <a href="assets/BenianWalls-Resume.pdf" download class="contact-btn">📄 Download Resume</a>
+      </div>
+      <p class="mono footer-note">© 2026 Benian Walls — built with way too much scroll-jacking</p>
+    </div>
+  </section>
+
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
