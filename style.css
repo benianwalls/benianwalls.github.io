@@ -185,7 +185,10 @@ body {
   width: 0;
   background: linear-gradient(90deg, var(--orange), #ffd166);
   border-radius: 0 3px 3px 0;
+  box-shadow: 0 0 10px rgba(255, 170, 80, 0.8);
 }
+
+::selection { background: var(--orange); color: #fff; }
 
 /* ============ FLOATING SECTION DOCK ============ */
 #topnav {
@@ -328,15 +331,19 @@ main { position: relative; z-index: 10; pointer-events: none; }
   50% { transform: translateY(8px); }
 }
 
-/* cards */
+/* cards — liquid glass */
 .card {
   max-width: 720px;
-  background: var(--paper);
-  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.52));
+  border-radius: 28px;
   padding: clamp(1.6rem, 4vw, 3rem);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 
 .card .kicker { color: var(--orange); opacity: 1; }
@@ -345,7 +352,12 @@ main { position: relative; z-index: 10; pointer-events: none; }
   font-size: clamp(2rem, 5vw, 3rem);
   margin-bottom: 1.4rem;
   letter-spacing: -0.01em;
+  background: linear-gradient(100deg, #16211b 30%, #3e8e5a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
+body.hacked .card h2 { background: none; -webkit-text-fill-color: currentColor; }
 
 .card p { line-height: 1.65; }
 
@@ -406,8 +418,9 @@ main { position: relative; z-index: 10; pointer-events: none; }
   object-fit: contain;
   background: #fff;
   padding: 5px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  border-radius: 16px;
+  border: 1px solid rgba(20, 35, 26, 0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   flex-shrink: 0;
   box-sizing: border-box;
 }
@@ -445,12 +458,13 @@ main { position: relative; z-index: 10; pointer-events: none; }
   font-size: 0.62rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  background: var(--orange);
+  background: linear-gradient(135deg, var(--orange), #ffb347);
   color: #fff;
   border-radius: 99px;
   padding: 3px 9px;
   vertical-align: middle;
   margin-left: 0.4rem;
+  box-shadow: 0 2px 8px rgba(255, 122, 61, 0.35);
 }
 
 /* resume + repo links */
@@ -459,15 +473,23 @@ main { position: relative; z-index: 10; pointer-events: none; }
   margin-top: 1.8rem;
   font-size: 0.85rem;
   letter-spacing: 0.08em;
-  background: #14231a;
+  background: rgba(20, 35, 26, 0.82);
   color: #ffd166;
   padding: 0.85rem 1.5rem;
-  border-radius: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   text-decoration: none;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
-  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
-.btn-resume:hover { transform: translateY(-2px); background: var(--orange); color: #fff; }
+.btn-resume:hover {
+  transform: translateY(-2px);
+  background: var(--orange);
+  color: #fff;
+  box-shadow: 0 14px 30px rgba(255, 122, 61, 0.4);
+}
 
 .repo-link {
   display: inline-block;
@@ -499,11 +521,15 @@ main { position: relative; z-index: 10; pointer-events: none; }
 .chips span {
   font-family: var(--mono);
   font-size: 0.8rem;
-  background: #14231a;
-  color: #d9e5dc;
+  background: rgba(20, 35, 26, 0.06);
+  color: #1d3325;
+  border: 1px solid rgba(20, 35, 26, 0.16);
   padding: 6px 13px;
   border-radius: 99px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: background 0.2s ease, transform 0.2s ease;
 }
+.chips span:hover { background: rgba(255, 122, 61, 0.14); transform: translateY(-1px); }
 
 /* contact */
 .contact-card { text-align: center; max-width: 560px; margin: 0 auto; }
@@ -519,17 +545,21 @@ main { position: relative; z-index: 10; pointer-events: none; }
   font-family: var(--mono);
   font-size: 0.95rem;
   color: #14231a;
-  background: #fff;
-  border: 2px solid #14231a;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(20, 35, 26, 0.18);
+  border-radius: 16px;
   padding: 0.9rem 1.2rem;
-  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 .contact-btn:hover {
   background: var(--orange);
   border-color: var(--orange);
   color: #fff;
   transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(255, 122, 61, 0.35);
 }
 .footer-note { font-size: 0.7rem; color: #8a948c; }
 
@@ -540,12 +570,12 @@ main { position: relative; z-index: 10; pointer-events: none; }
 /* reveal animation */
 .reveal {
   opacity: 0;
-  transform: translateY(46px);
+  transform: translateY(46px) scale(0.97);
   transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 .reveal.visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 /* ============ CLICKABLE WORLD ============ */
@@ -643,9 +673,12 @@ main { position: relative; z-index: 10; pointer-events: none; }
   top: 50%; left: 50%;
   transform: translate(-50%, -50%) scale(0.8);
   z-index: 90;
-  background: var(--paper);
-  border: 2px solid var(--orange);
-  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.62));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  outline: 2px solid var(--orange);
+  border-radius: 22px;
   padding: 1.6rem 2.2rem;
   text-align: center;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
