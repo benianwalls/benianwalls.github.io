@@ -200,6 +200,11 @@ body {
   align-items: center;
   gap: 2px;
   padding: 5px;
+  width: max-content;
+  /* stay a centered pill — never stretch into the badge counter */
+  max-width: calc(100vw - 240px);
+  overflow-x: auto;
+  scrollbar-width: none;
   border-radius: 99px;
   /* liquid glass: frosted tint + heavy blur with saturation boost */
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08));
@@ -257,18 +262,12 @@ body.hacked #topnav a { color: #7dffb0; }
 body.hacked #topnav a.active { color: #02110a; }
 body.hacked #nav-slider { background: #41ff9a; }
 
-@media (max-width: 1150px) {
-  #topnav {
-    left: 8px; right: 8px;
-    transform: none;
-    overflow-x: auto;
-    justify-content: flex-start;
-    scrollbar-width: none;
-  }
-  #topnav::-webkit-scrollbar { display: none; }
+#topnav::-webkit-scrollbar { display: none; }
+
+@media (max-width: 900px) {
+  /* small screens: dock stays centered, allow internal scroll */
+  #topnav { max-width: calc(100vw - 24px); }
   #topnav a { padding: 6px 10px; font-size: 0.6rem; }
-  #hud { top: 64px; }
-  #hack-toggle { top: 110px; }
 }
 
 /* ============ CONTENT ============ */
@@ -775,4 +774,11 @@ body.hacked #toast p { color: #5fcf91; }
   html { scroll-behavior: auto; }
   .reveal { opacity: 1; transform: none; transition: none; }
   .chevron { animation: none; }
+}
+
+/* on small screens the dock needs the full top row — HUD drops below it
+   (kept at the end of the file so it wins over the base positions) */
+@media (max-width: 900px) {
+  #hud { top: 64px; }
+  #hack-toggle { top: 110px; }
 }
