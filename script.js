@@ -345,7 +345,7 @@ function setLeg(legEl, crankEl, footEl, angle) {
    FLOATING SECTION DOCK
    ===================================================== */
 
-const navLinks = [...document.querySelectorAll("#topnav a[data-target]")];
+const navLinks = [...document.querySelectorAll("#topnav a")];
 const navSlider = document.getElementById("nav-slider");
 let navTops = [];
 let activeNav = -1;
@@ -376,27 +376,6 @@ navLinks.forEach((a) =>
     document.getElementById(a.dataset.target)?.scrollIntoView({ behavior: "smooth" });
   })
 );
-
-/* =====================================================
-   RECRUITER QUICK VIEW
-   ===================================================== */
-
-const quickview = document.getElementById("quickview");
-
-function setQuickview(open) {
-  quickview.classList.toggle("open", open);
-  document.body.style.overflow = open ? "hidden" : "";
-}
-
-document.querySelectorAll(".qv-open").forEach((b) =>
-  b.addEventListener("click", () => setQuickview(true))
-);
-quickview.addEventListener("click", (e) => {
-  if (e.target === quickview || e.target.closest(".qv-close")) setQuickview(false);
-});
-window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") setQuickview(false);
-});
 
 /* =====================================================
    MAIN LOOP

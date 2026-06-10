@@ -128,63 +128,7 @@
   <a data-target="education">education</a>
   <a data-target="leadership">leadership</a>
   <a data-target="contact">contact</a>
-  <a class="qv-open qv-accent">⚡ quick view</a>
 </nav>
-
-<!-- recruiter quick view: the whole resume on one screen -->
-<div id="quickview" role="dialog" aria-modal="true" aria-label="Resume quick view">
-  <div class="qv-panel">
-    <button class="qv-close" aria-label="Close quick view">✕</button>
-    <header class="qv-head">
-      <div>
-        <h2>Benian Walls</h2>
-        <p class="mono qv-sub">Cybersecurity &amp; Global Policy · Indiana University Luddy · Class of 2028</p>
-      </div>
-      <p class="mono qv-links">
-        <a href="mailto:bwalls06@outlook.com">bwalls06@outlook.com</a> ·
-        <a href="https://www.linkedin.com/in/benianwalls/" target="_blank" rel="noopener">LinkedIn</a> ·
-        <a href="https://github.com/benianwalls" target="_blank" rel="noopener">GitHub</a> ·
-        <a href="assets/BenianWalls-Resume.pdf" download>PDF ⬇</a>
-      </p>
-    </header>
-
-    <section class="qv-section">
-      <h3 class="mono">EXPERIENCE</h3>
-      <div class="qv-row"><strong>Cybersecurity Intern — Indianapolis Airport Authority</strong><span class="mono">May 2026 — Present</span></div>
-      <p>Vulnerability management, asset inventory, risk assessments, SIEM monitoring, endpoint security, threat investigation</p>
-      <div class="qv-row"><strong>Security Solutions Specialist — ByteShield Solutions</strong><span class="mono">Aug 2025 — Present</span></div>
-      <p><strong>35+</strong> high-risk findings per project at <strong>95%</strong> remediation · cut unauthorized access <strong>40%</strong> · cut risky phishing clicks <strong>45%</strong> (GoPhish)</p>
-      <div class="qv-row"><strong>Student IT Support — IU UITS</strong><span class="mono">incoming Aug 2026</span></div>
-    </section>
-
-    <section class="qv-section">
-      <h3 class="mono">PROJECTS</h3>
-      <div class="qv-row"><strong>LLM Agent Security Lab</strong><a class="mono" href="https://github.com/benianwalls/llm-agent-security-lab" target="_blank" rel="noopener">github ↗</a></div>
-      <p>Vulnerable-and-defended LLM agent sandbox: prompt injection, data exfiltration, prompt leakage + guardrails (least-privilege tools, output encoding)</p>
-      <div class="qv-row"><strong>Python Port Scanner</strong><a class="mono" href="https://github.com/benianwalls/Port_Scanner" target="_blank" rel="noopener">github ↗</a></div>
-      <p>Scans target IPs, identifies open ports, assesses attack surface</p>
-    </section>
-
-    <section class="qv-section">
-      <h3 class="mono">EDUCATION &amp; CERTS</h3>
-      <div class="qv-row"><strong>B.S. Cybersecurity &amp; Global Policy — Indiana University</strong><span class="mono">May 2028</span></div>
-      <p>Minor: Central Eurasian Studies · Hudson &amp; Holland Scholar · Provost Scholarship</p>
-      <div class="qv-row"><strong>Google Cybersecurity Certificate — Coursera</strong><span class="mono">Oct 2025</span></div>
-    </section>
-
-    <section class="qv-section">
-      <h3 class="mono">LEADERSHIP</h3>
-      <p><strong>President, Ingineering Club</strong> — exec board of 7, <strong>400+</strong> members · <strong>Member, Cybersecurity Club</strong> — ethical hacking, threat analysis</p>
-    </section>
-
-    <section class="qv-section">
-      <h3 class="mono">SKILLS</h3>
-      <p><strong>Security:</strong> Nessus, Nmap, GoPhish, Arctic Wolf, Tanium, Wireshark, OWASP Top 10, NIST, CIS Controls</p>
-      <p><strong>Code:</strong> Python, SQL, Java, JavaScript, HTML, CSS · <strong>Systems:</strong> Linux, Kali, Git/GitHub, Windows, macOS</p>
-      <p><strong>Languages:</strong> English, Turkish (fluent)</p>
-    </section>
-  </div>
-</div>
 
 <!-- badge counter -->
 <div id="hud" class="mono" title="Glowing badges are hidden along the trail — click them!">🏅 <span id="badge-count">0</span>/<span id="badge-total">7</span></div>
@@ -208,19 +152,7 @@
       <h1>BENIAN<br/>WALLS</h1>
       <p class="subtitle">Cybersecurity &amp; Global Policy @ Indiana University</p>
       <p class="tagline">Securing systems. Shredding trails.</p>
-      <div class="snapshot mono">
-        <span>🛡 Cybersecurity Intern @ Indianapolis Airport Authority</span>
-        <span>🎓 IU Luddy · Class of 2028</span>
-        <span>👥 President, 400+ member club</span>
-        <span>🗣 English / Turkish</span>
-      </div>
-      <div class="hero-actions">
-        <a class="btn-resume mono" href="assets/BenianWalls-Resume.pdf" download>⬇ resume</a>
-        <button class="btn-quickview qv-open mono">⚡ quick view</button>
-        <a class="icon-btn" href="mailto:bwalls06@outlook.com" title="Email">📧</a>
-        <a class="icon-btn" href="https://www.linkedin.com/in/benianwalls/" target="_blank" rel="noopener" title="LinkedIn">💼</a>
-        <a class="icon-btn" href="https://github.com/benianwalls" target="_blank" rel="noopener" title="GitHub">🐙</a>
-      </div>
+      <a class="btn-resume mono" href="assets/BenianWalls-Resume.pdf" download>⬇ download resume</a>
       <div class="scroll-hint">
         <span class="mono">scroll to ride</span>
         <span class="mono hint2">psst — click the rider, the trees &amp; the glowing badges</span>
@@ -290,9 +222,9 @@
         </div>
         <p class="org">ByteShield Solutions · Bloomington, IN</p>
         <ul>
-          <li>Conducted Nessus scans, reporting <strong>35+ high-risk issues</strong> per project with <strong>95% remediation</strong></li>
-          <li>Reviewed firewalls, devices, and network rules — <strong>reduced unauthorized access by 40%</strong></li>
-          <li>Built GoPhish phishing campaigns that <strong>cut risky clicks by 45%</strong></li>
+          <li>Conducted Nessus scans, reporting 35+ high-risk issues per project with 95% remediation</li>
+          <li>Reviewed firewalls, devices, and network rules — reduced unauthorized access attempts by 40%</li>
+          <li>Built GoPhish phishing campaigns that cut risky clicks by 45%</li>
         </ul>
         </div>
       </div>
@@ -403,7 +335,7 @@
         </div>
         <p class="org">Indiana University</p>
         <ul>
-          <li>Recruited and manage an executive board of 7 and a community of <strong>400+ members</strong></li>
+          <li>Recruited and manage an executive board of 7 and a community of 400+ members</li>
           <li>Run day-to-day operations: events, meetings, and project coordination</li>
         </ul>
         </div>
