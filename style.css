@@ -146,6 +146,48 @@ body {
   box-shadow: 0 2px 4px rgba(0,0,0,0.35);
 }
 
+/* landmarks — clickable buildings along the trail */
+.landmark {
+  position: absolute;
+  bottom: 104px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transform-origin: bottom center;
+  transition: transform 0.2s ease;
+}
+.landmark:hover { transform: scale(1.04); }
+.landmark svg { display: block; filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.25)); }
+
+.lm-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  color: #14231a;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.55));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 99px;
+  padding: 6px 13px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  animation: label-bob 2.2s ease-in-out infinite;
+}
+.lm-click { color: var(--orange); font-weight: 700; }
+@keyframes label-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+/* building windows: dark by day, warm glow at night */
+.lm-window { fill: #51626b; transition: fill 0.6s ease; }
+body.night .lm-window {
+  fill: #ffd166;
+  filter: drop-shadow(0 0 6px rgba(255, 209, 102, 0.8));
+}
+
 /* foreground bushes */
 .bush {
   position: absolute; bottom: -12px;
@@ -566,7 +608,47 @@ body.hacked .card h2 { background: none; -webkit-text-fill-color: currentColor; 
 #about .card, #projects .card, #leadership .card { margin-left: auto; }
 #contact { justify-content: center; }
 
-/* reveal animation */
+/* ============ LANDMARK POPUPS ============ */
+.popup {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 4vh 4vw;
+  background: rgba(8, 14, 10, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.popup.open { display: flex; }
+.popup-panel {
+  position: relative;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: popup-in 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+@keyframes popup-in {
+  from { opacity: 0; transform: translateY(30px) scale(0.93); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.popup-close {
+  position: absolute;
+  top: 14px; right: 16px;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(20, 35, 26, 0.18);
+  background: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #14231a;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.2s ease;
+}
+.popup-close:hover { background: var(--orange); color: #fff; transform: rotate(90deg); }
+body.hacked .popup-close { background: #04140c; color: #41ff9a; border-color: #1f8f4f; }
+
+/* reveal animation (kept for any future in-flow cards) */
 .reveal {
   opacity: 0;
   transform: translateY(46px) scale(0.97);

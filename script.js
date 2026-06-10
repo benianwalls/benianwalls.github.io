@@ -140,6 +140,16 @@ function buildGround() {
     sp.innerHTML = `<div class="post"></div><div class="sign">${label}</div>`;
     frag.appendChild(sp);
 
+    // the landmark building for this section — click it to open the details
+    if (LANDMARK_ART[id]) {
+      const lm = document.createElement("div");
+      lm.className = "landmark";
+      lm.dataset.id = id;
+      lm.innerHTML = `<div class="lm-label mono">${LM_LABELS[id]} <span class="lm-click">· click</span></div>${LANDMARK_ART[id]}`;
+      lm.style.left = (x + 80) + "px";
+      frag.appendChild(lm);
+    }
+
     // a collectible badge floats near each signpost (unless already grabbed)
     if (BADGE_ICONS[id] && !collected.has(id)) {
       const col = document.createElement("div");
@@ -190,6 +200,109 @@ function buildStars() {
 }
 
 /* =====================================================
+   LANDMARKS — buildings along the trail, click to open
+   ===================================================== */
+
+const LM_LABELS = {
+  about: "🏠 about me",
+  experience: "🏢 experience",
+  projects: "🔧 projects",
+  skills: "🛠 gear shop · skills",
+  education: "🏫 education",
+  leadership: "🚩 the club",
+  contact: "📮 say hi",
+};
+
+const LANDMARK_ART = {
+  about: `<svg width="170" height="150" viewBox="0 0 170 150" xmlns="http://www.w3.org/2000/svg">
+    <rect x="118" y="26" width="15" height="34" fill="#7a5c3e"/>
+    <rect x="20" y="68" width="130" height="82" rx="3" fill="#efe3c8" stroke="#5a4330" stroke-width="3"/>
+    <polygon points="8,72 85,14 162,72" fill="#a85638" stroke="#5a4330" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="71" y="98" width="28" height="52" rx="3" fill="#7a5c3e"/>
+    <circle cx="94" cy="126" r="2.5" fill="#ffd166"/>
+    <rect class="lm-window" x="34" y="86" width="25" height="22" rx="3"/>
+    <rect class="lm-window" x="111" y="86" width="25" height="22" rx="3"/>
+  </svg>`,
+  experience: `<svg width="140" height="210" viewBox="0 0 140 210" xmlns="http://www.w3.org/2000/svg">
+    <line x1="70" y1="22" x2="70" y2="4" stroke="#3d4a52" stroke-width="4"/>
+    <circle cx="70" cy="4" r="3.5" fill="#ff7a3d"/>
+    <rect x="20" y="22" width="100" height="188" rx="4" fill="#aebfc7" stroke="#3d4a52" stroke-width="3"/>
+    <rect x="20" y="22" width="100" height="16" fill="#3d4a52"/>
+    <rect class="lm-window" x="32" y="50" width="18" height="18" rx="2"/><rect class="lm-window" x="61" y="50" width="18" height="18" rx="2"/><rect class="lm-window" x="90" y="50" width="18" height="18" rx="2"/>
+    <rect class="lm-window" x="32" y="80" width="18" height="18" rx="2"/><rect class="lm-window" x="61" y="80" width="18" height="18" rx="2"/><rect class="lm-window" x="90" y="80" width="18" height="18" rx="2"/>
+    <rect class="lm-window" x="32" y="110" width="18" height="18" rx="2"/><rect class="lm-window" x="61" y="110" width="18" height="18" rx="2"/><rect class="lm-window" x="90" y="110" width="18" height="18" rx="2"/>
+    <rect class="lm-window" x="32" y="140" width="18" height="18" rx="2"/><rect class="lm-window" x="90" y="140" width="18" height="18" rx="2"/>
+    <rect x="55" y="176" width="30" height="34" rx="2" fill="#2e3b42"/>
+  </svg>`,
+  projects: `<svg width="180" height="140" viewBox="0 0 180 140" xmlns="http://www.w3.org/2000/svg">
+    <rect x="14" y="52" width="152" height="88" rx="3" fill="#cdd6c0" stroke="#46553f" stroke-width="3"/>
+    <polygon points="4,56 90,12 176,56" fill="#5d7050" stroke="#46553f" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="46" y="76" width="88" height="64" rx="3" fill="#6b7d5e"/>
+    <line x1="46" y1="93" x2="134" y2="93" stroke="#54644a" stroke-width="3"/>
+    <line x1="46" y1="109" x2="134" y2="109" stroke="#54644a" stroke-width="3"/>
+    <line x1="46" y1="125" x2="134" y2="125" stroke="#54644a" stroke-width="3"/>
+    <circle cx="90" cy="63" r="9" fill="none" stroke="#ffd166" stroke-width="4"/>
+    <rect class="lm-window" x="20" y="78" width="18" height="18" rx="2"/>
+    <rect class="lm-window" x="142" y="78" width="18" height="18" rx="2"/>
+  </svg>`,
+  skills: `<svg width="170" height="140" viewBox="0 0 170 140" xmlns="http://www.w3.org/2000/svg">
+    <rect x="18" y="58" width="134" height="82" rx="3" fill="#e8d9bd" stroke="#6b5135" stroke-width="3"/>
+    <polygon points="12,64 158,64 148,30 22,30" fill="#ff7a3d" stroke="#c2531a" stroke-width="3" stroke-linejoin="round"/>
+    <text x="85" y="53" font-size="14" font-family="JetBrains Mono, monospace" fill="#fff" text-anchor="middle" font-weight="bold">GEAR</text>
+    <rect class="lm-window" x="58" y="78" width="54" height="28" rx="3"/>
+    <rect x="28" y="106" width="22" height="34" rx="2" fill="#6b5135"/>
+  </svg>`,
+  education: `<svg width="220" height="175" viewBox="0 0 220 175" xmlns="http://www.w3.org/2000/svg">
+    <line x1="110" y1="30" x2="110" y2="2" stroke="#6e3c2a" stroke-width="3"/>
+    <polygon points="110,3 136,9 110,15" fill="#9d2235"/>
+    <polygon points="84,34 110,12 136,34" fill="#6e3c2a"/>
+    <rect x="92" y="32" width="36" height="48" fill="#b56a52" stroke="#6e3c2a" stroke-width="3"/>
+    <circle cx="110" cy="54" r="9" fill="#fff7e8" stroke="#6e3c2a" stroke-width="2.5"/>
+    <line x1="110" y1="54" x2="110" y2="48" stroke="#6e3c2a" stroke-width="2"/>
+    <line x1="110" y1="54" x2="115" y2="56" stroke="#6e3c2a" stroke-width="2"/>
+    <rect x="14" y="78" width="192" height="97" rx="3" fill="#c97f64" stroke="#6e3c2a" stroke-width="3"/>
+    <rect x="96" y="128" width="28" height="47" rx="3" fill="#5a3526"/>
+    <rect class="lm-window" x="28" y="96" width="24" height="22" rx="2"/><rect class="lm-window" x="60" y="96" width="24" height="22" rx="2"/>
+    <rect class="lm-window" x="136" y="96" width="24" height="22" rx="2"/><rect class="lm-window" x="168" y="96" width="24" height="22" rx="2"/>
+  </svg>`,
+  leadership: `<svg width="180" height="160" viewBox="0 0 180 160" xmlns="http://www.w3.org/2000/svg">
+    <line x1="162" y1="160" x2="162" y2="16" stroke="#5a4330" stroke-width="4"/>
+    <polygon points="162,18 124,27 162,36" fill="#ffd166"/>
+    <polygon points="0,74 70,26 140,74" fill="#5a4330"/>
+    <rect x="10" y="70" width="120" height="90" rx="3" fill="#9a6b43" stroke="#5a4330" stroke-width="3"/>
+    <line x1="10" y1="94" x2="130" y2="94" stroke="#83592f" stroke-width="2.5"/>
+    <line x1="10" y1="116" x2="130" y2="116" stroke="#83592f" stroke-width="2.5"/>
+    <line x1="10" y1="138" x2="130" y2="138" stroke="#83592f" stroke-width="2.5"/>
+    <rect x="56" y="110" width="26" height="50" rx="3" fill="#3f2d1d"/>
+    <rect class="lm-window" x="22" y="80" width="22" height="20" rx="2"/>
+    <rect class="lm-window" x="96" y="80" width="22" height="20" rx="2"/>
+  </svg>`,
+  contact: `<svg width="115" height="140" viewBox="0 0 115 140" xmlns="http://www.w3.org/2000/svg">
+    <rect x="50" y="62" width="11" height="78" fill="#5a4330"/>
+    <rect x="14" y="26" width="82" height="40" rx="18" fill="#ff7a3d" stroke="#b54a16" stroke-width="3"/>
+    <rect x="88" y="6" width="5" height="24" fill="#9d2235"/>
+    <polygon points="93,6 112,12 93,18" fill="#9d2235"/>
+    <text x="55" y="51" font-family="JetBrains Mono, monospace" font-size="13" fill="#fff" text-anchor="middle" font-weight="bold">MAIL</text>
+  </svg>`,
+};
+
+function openPopup(id) {
+  const p = document.getElementById("popup-" + id);
+  if (!p) return;
+  p.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closePopups() {
+  document.querySelectorAll(".popup.open").forEach((p) => p.classList.remove("open"));
+  document.body.style.overflow = "";
+}
+
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closePopups();
+});
+
+/* =====================================================
    CLICKABLE WORLD — badges, hops, shakes
    ===================================================== */
 
@@ -207,6 +320,12 @@ document.getElementById("badge-total").textContent = BADGE_TOTAL;
 let hopY = 0, hopVel = 0;
 
 document.addEventListener("click", (e) => {
+  if (e.target.closest(".popup-close")) return closePopups();
+  if (e.target.classList && e.target.classList.contains("popup")) return closePopups();
+
+  const lm = e.target.closest(".landmark");
+  if (lm) return openPopup(lm.dataset.id);
+
   const badge = e.target.closest(".collectible");
   if (badge) return collectBadge(badge, e);
 

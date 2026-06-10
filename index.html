@@ -154,15 +154,30 @@
       <p class="tagline">Securing systems. Shredding trails.</p>
       <a class="btn-resume mono" href="assets/BenianWalls-Resume.pdf" download>⬇ download resume</a>
       <div class="scroll-hint">
-        <span class="mono">scroll to ride</span>
-        <span class="mono hint2">psst — click the rider, the trees &amp; the glowing badges</span>
+        <span class="mono">scroll to ride — click the buildings to explore</span>
+        <span class="mono hint2">psst — the rider, trees &amp; glowing badges are clickable too</span>
         <span class="chevron">▾</span>
       </div>
     </div>
   </section>
 
-  <section class="panel" id="about">
-    <div class="card reveal">
+  <!-- the ride: empty trail sections — the world landmarks carry the content -->
+  <section class="panel" id="about"></section>
+  <section class="panel" id="experience"></section>
+  <section class="panel" id="projects"></section>
+  <section class="panel" id="skills"></section>
+  <section class="panel" id="education"></section>
+  <section class="panel" id="leadership"></section>
+  <section class="panel" id="contact"></section>
+
+</main>
+
+<!-- ===== LANDMARK POPUPS ===== -->
+<div id="popups">
+
+  <div class="popup" id="popup-about" role="dialog" aria-modal="true" aria-label="About Me">
+    <div class="card popup-panel">
+      <button class="popup-close" aria-label="Close">✕</button>
       <p class="mono kicker">MILE 01 — WHO'S RIDING</p>
       <h2>About Me</h2>
       <div class="about-flex">
@@ -191,10 +206,11 @@
         </figure>
       </div>
     </div>
-  </section>
+  </div>
 
-  <section class="panel" id="experience">
-    <div class="card reveal">
+  <div class="popup" id="popup-experience" role="dialog" aria-modal="true" aria-label="Experience">
+    <div class="card popup-panel">
+      <button class="popup-close" aria-label="Close">✕</button>
       <p class="mono kicker">MILE 02 — THE CLIMB</p>
       <h2>Experience</h2>
 
@@ -243,10 +259,11 @@
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <section class="panel" id="projects">
-    <div class="card reveal">
+  <div class="popup" id="popup-projects" role="dialog" aria-modal="true" aria-label="Projects">
+    <div class="card popup-panel">
+      <button class="popup-close" aria-label="Close">✕</button>
       <p class="mono kicker">MILE 03 — BUILDS</p>
       <h2>Projects</h2>
 
@@ -262,10 +279,11 @@
         <a class="repo-link mono" href="https://github.com/benianwalls/Port_Scanner" target="_blank" rel="noopener">view code on github ↗</a>
       </div>
     </div>
-  </section>
+  </div>
 
-  <section class="panel" id="skills">
-    <div class="card reveal">
+  <div class="popup" id="popup-skills" role="dialog" aria-modal="true" aria-label="Skills">
+    <div class="card popup-panel">
+      <button class="popup-close" aria-label="Close">✕</button>
       <p class="mono kicker">MILE 04 — GEAR CHECK</p>
       <h2>Skills</h2>
       <div class="skill-group">
@@ -287,10 +305,11 @@
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <section class="panel" id="education">
-    <div class="card reveal">
+  <div class="popup" id="popup-education" role="dialog" aria-modal="true" aria-label="Education and Certificates">
+    <div class="card popup-panel">
+      <button class="popup-close" aria-label="Close">✕</button>
       <p class="mono kicker">MILE 05 — SUMMIT ROUTE</p>
       <h2>Education &amp; Certs</h2>
       <div class="job club-job">
@@ -320,10 +339,11 @@
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <section class="panel" id="leadership">
-    <div class="card reveal">
+  <div class="popup" id="popup-leadership" role="dialog" aria-modal="true" aria-label="Leadership">
+    <div class="card popup-panel">
+      <button class="popup-close" aria-label="Close">✕</button>
       <p class="mono kicker">MILE 06 — RIDING WITH THE PACK</p>
       <h2>Leadership</h2>
       <div class="job club-job">
@@ -354,10 +374,11 @@
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <section class="panel" id="contact">
-    <div class="card reveal contact-card">
+  <div class="popup" id="popup-contact" role="dialog" aria-modal="true" aria-label="Contact">
+    <div class="card popup-panel contact-card">
+      <button class="popup-close" aria-label="Close">✕</button>
       <p class="mono kicker">// END OF TRAIL</p>
       <h2>Let's Connect</h2>
       <p>Open to internships, security projects, and a good ride.</p>
@@ -369,9 +390,9 @@
       </div>
       <p class="mono footer-note">© 2026 Benian Walls — built with way too much scroll-jacking</p>
     </div>
-  </section>
+  </div>
 
-</main>
+</div>
 
 <script src="script.js"></script>
 </body>
