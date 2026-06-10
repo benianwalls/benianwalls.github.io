@@ -432,6 +432,7 @@ function frame(now) {
 
   // day → night across the ride
   const night = clamp((progress - 0.55) / 0.35, 0, 1);
+  document.body.classList.toggle("night", night > 0.5);
   els.skyNight.style.opacity = night.toFixed(3);
   els.stars.style.opacity = (night * 0.95).toFixed(3);
   els.headlight.setAttribute("opacity", (night * 0.7).toFixed(2));
