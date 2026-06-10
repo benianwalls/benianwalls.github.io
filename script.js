@@ -342,6 +342,42 @@ function setLeg(legEl, crankEl, footEl, angle) {
 }
 
 /* =====================================================
+   FLOATING SECTION DOCK
+   ===================================================== */
+
+const navLinks = [...document.querySelectorAll("#topnav a")];
+const navSlider = document.getElementById("nav-slider");
+let navTops = [];
+let activeNav = -1;
+
+function cacheNavTops() {
+  navTops = navLinks.map((a) => document.getElementById(a.dataset.target)?.offsetTop ?? 0);
+}
+
+function moveSlider(i) {
+  const a = navLinks[i];
+  navSlider.style.width = a.offsetWidth + "px";
+  navSlider.style.transform = `translateX(${a.offsetLeft}px)`;
+}
+
+function updateNav(scrollPos) {
+  const pos = scrollPos + window.innerHeight * 0.45;
+  let i = 0;
+  for (let k = 0; k < navTops.length; k++) if (pos >= navTops[k]) i = k;
+  if (i !== activeNav) {
+    activeNav = i;
+    navLinks.forEach((a, k) => a.classList.toggle("active", k === i));
+    moveSlider(i);
+  }
+}
+
+navLinks.forEach((a) =>
+  a.addEventListener("click", () => {
+    document.getElementById(a.dataset.target)?.scrollIntoView({ behavior: "smooth" });
+  })
+);
+
+/* =====================================================
    MAIN LOOP
    ===================================================== */
 
@@ -410,6 +446,9 @@ function frame(now) {
   // progress bar
   els.progress.style.width = (progress * 100).toFixed(2) + "%";
 
+  // section dock indicator
+  updateNav(current);
+
   requestAnimationFrame(frame);
 }
 
@@ -434,8 +473,14 @@ document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
 let resizeTimer;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(buildScene, 200);
+  resizeTimer = setTimeout(() => {
+    buildScene();
+    cacheNavTops();
+    if (activeNav >= 0) moveSlider(activeNav);
+  }, 200);
 });
 
 buildScene();
+cacheNavTops();
+updateNav(window.scrollY);
 requestAnimationFrame(frame);

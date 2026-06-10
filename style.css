@@ -187,6 +187,63 @@ body {
   border-radius: 0 3px 3px 0;
 }
 
+/* ============ FLOATING SECTION DOCK ============ */
+#topnav {
+  position: fixed;
+  top: 12px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+  border-radius: 99px;
+  background: rgba(14, 26, 20, 0.28);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+#topnav a {
+  position: relative;
+  z-index: 1;
+  padding: 7px 13px;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: #f0ead8;
+  cursor: pointer;
+  border-radius: 99px;
+  white-space: nowrap;
+  transition: color 0.25s ease;
+}
+#topnav a:hover { color: #ffd166; }
+#topnav a.active { color: #14231a; }
+#nav-slider {
+  position: absolute;
+  top: 5px; bottom: 5px; left: 0;
+  width: 0;
+  background: rgba(255, 209, 102, 0.92);
+  border-radius: 99px;
+  transition: transform 0.4s cubic-bezier(0.3, 0.8, 0.3, 1), width 0.4s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+body.hacked #topnav { background: rgba(2, 16, 8, 0.45); border-color: rgba(0, 255, 140, 0.25); }
+body.hacked #topnav a { color: #7dffb0; }
+body.hacked #topnav a.active { color: #02110a; }
+body.hacked #nav-slider { background: #41ff9a; }
+
+@media (max-width: 1150px) {
+  #topnav {
+    left: 8px; right: 8px;
+    transform: none;
+    overflow-x: auto;
+    justify-content: flex-start;
+    scrollbar-width: none;
+  }
+  #topnav::-webkit-scrollbar { display: none; }
+  #topnav a { padding: 6px 10px; font-size: 0.6rem; }
+  #hud { top: 64px; }
+  #hack-toggle { top: 110px; }
+}
+
 /* ============ CONTENT ============ */
 /* main + panels are transparent overlays — clicks must fall through
    to the scene; cards re-enable pointer events for their own content */
