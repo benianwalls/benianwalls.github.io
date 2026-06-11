@@ -399,12 +399,50 @@ body.riding .scroll-hint {
   transform: rotate(45deg);
   animation: chev-cascade 1.8s ease-in-out infinite;
 }
-.scroll-cta .chev:nth-child(2) { animation-delay: 0.18s; }
-.scroll-cta .chev:nth-child(3) { animation-delay: 0.36s; }
+.scroll-cta .chev:nth-child(3) { animation-delay: 0.18s; }
+.scroll-cta .chev:nth-child(4) { animation-delay: 0.36s; }
 .scroll-cta:hover .chev { color: var(--orange); }
 @keyframes chev-cascade {
   0%, 60%, 100% { opacity: 0.25; transform: rotate(45deg) translate(0, 0); }
   30% { opacity: 1; transform: rotate(45deg) translate(4px, 4px); }
+}
+
+/* phones: glass pill with a nudging arrow instead of bare chevrons */
+.scroll-cta .cta-pill {
+  display: none;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 11px 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #14231a;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 99px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.28));
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  animation: cta-pulse 2.2s ease-in-out infinite;
+}
+.scroll-cta .pill-arrow {
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 1;
+  animation: arrow-nudge 1.4s ease-in-out infinite;
+}
+@keyframes cta-pulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16), 0 0 0 0 rgba(255, 122, 61, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.7); }
+  55% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16), 0 0 0 14px rgba(255, 122, 61, 0), inset 0 1px 0 rgba(255, 255, 255, 0.7); }
+}
+@keyframes arrow-nudge {
+  0%, 100% { transform: translateX(0); opacity: 0.65; }
+  50% { transform: translateX(6px); opacity: 1; }
+}
+@media (max-width: 768px) {
+  .scroll-cta .chev { display: none; }
+  .scroll-cta .cta-pill { display: inline-flex; }
 }
 
 /* cards — liquid glass */
@@ -919,6 +957,7 @@ body.hacked #toast p { color: #5fcf91; }
   html { scroll-behavior: auto; }
   .reveal { opacity: 1; transform: none; transition: none; }
   .scroll-cta .chev { animation: none; opacity: 0.7; }
+  .scroll-cta .cta-pill, .scroll-cta .pill-arrow { animation: none; }
 }
 
 /* on small screens the dock needs the full top row — HUD drops below it
