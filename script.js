@@ -29,6 +29,7 @@ const els = {
 
 let maxScroll = 1;
 let worldWidths = {};
+let sectionScrollTargets = {};
 
 /* =====================================================
    PROCEDURAL SCENERY
@@ -128,6 +129,7 @@ function buildGround() {
     ["contact", "END OF TRAIL"],
   ];
   const bikerX = window.innerWidth * 0.14 + 135; // roughly where the biker sits
+  sectionScrollTargets = {};
   for (const [id, label] of sections) {
     const sec = document.getElementById(id);
     if (!sec) continue;
@@ -137,6 +139,8 @@ function buildGround() {
     // place the sign so it passes the biker when the section is centered on screen
     const x = bikerX + (sec.offsetTop - window.innerHeight * 0.18) * SPEEDS.ground + 320;
     sp.style.left = x + "px";
+    // scrollY at which this landmark aligns with the biker (ground speed = 1)
+    sectionScrollTargets[id] = clamp(x + 80 - bikerX, 0, maxScroll);
     sp.innerHTML = `<div class="post"></div><div class="sign">${label}</div>`;
     frag.appendChild(sp);
 
@@ -298,6 +302,16 @@ function closePopups() {
   document.body.style.overflow = "";
 }
 
+const isSmallScreen = () => window.innerWidth < 768;
+
+function scrollToSection(id) {
+  if (isSmallScreen() && sectionScrollTargets[id] != null) {
+    window.scrollTo({ top: sectionScrollTargets[id], behavior: "smooth" });
+  } else {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  }
+}
+
 function canScrollPage() {
   if (document.body.style.overflow === "hidden") return false;
   if (document.activeElement?.closest("input, textarea, select, [contenteditable='true']")) return false;
@@ -351,7 +365,7 @@ document.addEventListener("click", (e) => {
 
   const sign = e.target.closest(".signpost");
   if (sign) {
-    document.getElementById(sign.dataset.target)?.scrollIntoView({ behavior: "smooth" });
+    scrollToSection(sign.dataset.target);
     return;
   }
 
@@ -512,7 +526,7 @@ function updateNav(scrollPos) {
 
 navLinks.forEach((a) =>
   a.addEventListener("click", () => {
-    document.getElementById(a.dataset.target)?.scrollIntoView({ behavior: "smooth" });
+    scrollToSection(a.dataset.target);
   })
 );
 
@@ -621,7 +635,14 @@ document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
    ===================================================== */
 
 let resizeTimer;
+let lastW = window.innerWidth, lastH = window.innerHeight;
 window.addEventListener("resize", () => {
+  // ignore height-only changes from the mobile URL bar hiding/showing
+  const wChanged = window.innerWidth !== lastW;
+  const hChanged = Math.abs(window.innerHeight - lastH) > 150;
+  if (!wChanged && !hChanged) return;
+  lastW = window.innerWidth;
+  lastH = window.innerHeight;
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     buildScene();
