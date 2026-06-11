@@ -309,13 +309,13 @@ function openPopup(id) {
   p.classList.add("open");
   document.body.style.overflow = "hidden";
   lastFocused = document.activeElement;
-  p.querySelector(".popup-close")?.focus();
+  p.querySelector(".popup-close")?.focus({ preventScroll: true });
 }
 
 function closePopups() {
   document.querySelectorAll(".popup.open").forEach((p) => p.classList.remove("open"));
   document.body.style.overflow = "";
-  if (lastFocused?.focus) lastFocused.focus();
+  if (lastFocused?.focus) lastFocused.focus({ preventScroll: true });
   lastFocused = null;
 }
 
@@ -582,6 +582,110 @@ window.addEventListener("scroll", () => {
 }, { passive: true });
 
 document.getElementById("scroll-cta")?.addEventListener("click", () => scrollToSection("about"));
+
+/* =====================================================
+   TERMINAL TYPEWRITER INTRO
+   ===================================================== */
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function typeIntro() {
+  const el = document.getElementById("term-text");
+  if (!el) return;
+  const lines = ["$ ./ride_resume.sh", "// TRAILHEAD"];
+  if (reducedMotion) {
+    el.textContent = lines.join("\n");
+    return;
+  }
+  await sleep(500);
+  for (let i = 0; i < lines.length; i++) {
+    for (const ch of lines[i]) {
+      el.textContent += ch;
+      await sleep(ch === " " ? 16 : 26 + Math.random() * 38);
+    }
+    if (i < lines.length - 1) {
+      await sleep(420);
+      el.textContent += "\n";
+    }
+  }
+}
+typeIntro();
+
+/* =====================================================
+   AUTO-RIDE TOUR
+   ===================================================== */
+
+const tourBtn = document.getElementById("tour-btn");
+const TOUR_ORDER = ["about", "experience", "projects", "skills", "education", "leadership", "contact"];
+let tourActive = false;
+
+function tweenScroll(to, duration) {
+  return new Promise((resolve) => {
+    if (duration <= 0) {
+      window.scrollTo(0, to);
+      return resolve(true);
+    }
+    const from = window.scrollY;
+    const start = performance.now();
+    (function step(now) {
+      if (!tourActive) return resolve(false);
+      const t = clamp((now - start) / duration, 0, 1);
+      // linear pace — the scene's lerp already softens the start and stop,
+      // so the bike rides at a steady cadence between landmarks
+      window.scrollTo(0, from + (to - from) * t);
+      if (t < 1) requestAnimationFrame(step);
+      else resolve(true);
+    })(performance.now());
+  });
+}
+
+function tourPause(ms) {
+  return new Promise((resolve) => {
+    const start = performance.now();
+    (function check() {
+      if (!tourActive) return resolve(false);
+      if (performance.now() - start >= ms) return resolve(true);
+      requestAnimationFrame(check);
+    })();
+  });
+}
+
+async function startTour() {
+  tourActive = true;
+  document.body.classList.add("touring");
+  tourBtn.textContent = "■ stop tour";
+  closePopups();
+  for (let i = 0; i < TOUR_ORDER.length; i++) {
+    const id = TOUR_ORDER[i];
+    const y = sectionScrollTargets[id] ?? document.getElementById(id)?.offsetTop ?? 0;
+    const dist = Math.abs(y - window.scrollY);
+    // constant riding speed (~0.5px/ms) so every leg feels the same
+    const duration = reducedMotion ? 0 : clamp(dist * 2.0, 900, 5000);
+    if (!(await tweenScroll(y, duration))) return;
+    if (!(await tourPause(450))) return; // let the scene settle at the landmark
+    openPopup(id);
+    if (i === TOUR_ORDER.length - 1) break; // end the ride on "Let's Connect"
+    if (!(await tourPause(3400))) return; // linger so the card can be read
+    closePopups();
+    if (!(await tourPause(350))) return;
+  }
+  stopTour();
+}
+
+function stopTour() {
+  tourActive = false;
+  document.body.classList.remove("touring");
+  if (tourBtn) tourBtn.textContent = "▶ take the tour";
+}
+
+tourBtn?.addEventListener("click", () => (tourActive ? stopTour() : startTour()));
+
+// any manual input hands control back to the rider
+for (const evt of ["wheel", "touchstart", "keydown", "mousedown"]) {
+  window.addEventListener(evt, (e) => {
+    if (tourActive && !e.target?.closest?.("#tour-btn")) stopTour();
+  }, { passive: true });
+}
 
 document.getElementById("back-to-start")?.addEventListener("click", () => {
   closePopups();
