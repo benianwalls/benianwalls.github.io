@@ -204,13 +204,13 @@ function buildStars() {
    ===================================================== */
 
 const LM_LABELS = {
-  about: "🏠 about me",
-  experience: "🏢 experience",
-  projects: "🔧 projects",
+  about: "🏠 home · about me",
+  experience: "🏢 work ·experience",
+  projects: "🔧 garage · projects",
   skills: "🛠 gear shop · skills",
-  education: "🏫 education",
-  leadership: "🚩 the club",
-  contact: "📮 say hi",
+  education: "🏫 school · education",
+  leadership: "🚩 club · leadership",
+  contact: "📮 mail · say hi",
 };
 
 const LANDMARK_ART = {
@@ -298,8 +298,28 @@ function closePopups() {
   document.body.style.overflow = "";
 }
 
+function canScrollPage() {
+  if (document.body.style.overflow === "hidden") return false;
+  if (document.activeElement?.closest("input, textarea, select, [contenteditable='true']")) return false;
+  return true;
+}
+
+const SCROLL_STEP = () => window.innerHeight * 0.15;
+
 window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closePopups();
+  if (e.key === "Escape") return closePopups();
+  if (!canScrollPage()) return;
+
+  let delta = 0;
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") delta = SCROLL_STEP();
+  else if (e.key === "ArrowLeft" || e.key === "ArrowUp") delta = -SCROLL_STEP();
+  else return;
+
+  e.preventDefault();
+  window.scrollBy({
+    top: delta,
+    behavior: reducedMotion ? "auto" : "smooth",
+  });
 });
 
 /* =====================================================
@@ -506,6 +526,16 @@ let prev = target;
 let idleTime = 0;
 
 window.addEventListener("scroll", () => { target = window.scrollY; }, { passive: true });
+
+window.addEventListener("wheel", (e) => {
+  if (!canScrollPage()) return;
+
+  const { deltaX, deltaY } = e;
+  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    e.preventDefault();
+    window.scrollBy({ top: deltaX, left: 0, behavior: "auto" });
+  }
+}, { passive: false });
 
 function frame(now) {
   current = lerp(current, target, reducedMotion ? 1 : 0.085);
