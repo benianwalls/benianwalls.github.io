@@ -137,7 +137,9 @@ function buildGround() {
     sp.className = "signpost";
     sp.dataset.target = id;
     // place the sign so it passes the biker when the section is centered on screen
-    const x = bikerX + (sec.offsetTop - window.innerHeight * 0.18) * SPEEDS.ground + 320;
+    let x = bikerX + (sec.offsetTop - window.innerHeight * 0.18) * SPEEDS.ground + 320;
+    // narrow screens: keep the landmark reachable before the trail runs out
+    if (isSmallScreen()) x = Math.min(x, bikerX + maxScroll - 80);
     sp.style.left = x + "px";
     // scrollY at which this landmark aligns with the biker (ground speed = 1)
     sectionScrollTargets[id] = clamp(x + 80 - bikerX, 0, maxScroll);
