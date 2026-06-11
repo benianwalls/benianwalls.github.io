@@ -151,8 +151,17 @@ function buildGround() {
       const lm = document.createElement("div");
       lm.className = "landmark";
       lm.dataset.id = id;
+      lm.tabIndex = 0;
+      lm.setAttribute("role", "button");
+      lm.setAttribute("aria-label", `Open ${id} details`);
       lm.innerHTML = `<div class="lm-label mono">${LM_LABELS[id]} <span class="lm-click">· click</span></div>${LANDMARK_ART[id]}`;
       lm.style.left = (x + 80) + "px";
+      lm.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openPopup(id);
+        }
+      });
       frag.appendChild(lm);
     }
 
@@ -292,17 +301,36 @@ const LANDMARK_ART = {
   </svg>`,
 };
 
+let lastFocused = null;
+
 function openPopup(id) {
   const p = document.getElementById("popup-" + id);
   if (!p) return;
   p.classList.add("open");
   document.body.style.overflow = "hidden";
+  lastFocused = document.activeElement;
+  p.querySelector(".popup-close")?.focus();
 }
 
 function closePopups() {
   document.querySelectorAll(".popup.open").forEach((p) => p.classList.remove("open"));
   document.body.style.overflow = "";
+  if (lastFocused?.focus) lastFocused.focus();
+  lastFocused = null;
 }
+
+/* swipe down on a popup card (when scrolled to the top) dismisses it */
+document.querySelectorAll(".popup-panel").forEach((panel) => {
+  let startY = 0, startedAtTop = false;
+  panel.addEventListener("touchstart", (e) => {
+    startY = e.touches[0].clientY;
+    startedAtTop = panel.scrollTop <= 0;
+  }, { passive: true });
+  panel.addEventListener("touchend", (e) => {
+    const dy = e.changedTouches[0].clientY - startY;
+    if (startedAtTop && panel.scrollTop <= 0 && dy > 90) closePopups();
+  }, { passive: true });
+});
 
 const isSmallScreen = () => window.innerWidth < 768;
 
@@ -533,7 +561,8 @@ function updateNav(scrollPos) {
 }
 
 navLinks.forEach((a) =>
-  a.addEventListener("click", () => {
+  a.addEventListener("click", (e) => {
+    e.preventDefault();
     scrollToSection(a.dataset.target);
   })
 );
@@ -547,7 +576,17 @@ let current = target;
 let prev = target;
 let idleTime = 0;
 
-window.addEventListener("scroll", () => { target = window.scrollY; }, { passive: true });
+window.addEventListener("scroll", () => {
+  target = window.scrollY;
+  document.body.classList.toggle("riding", window.scrollY > 80);
+}, { passive: true });
+
+document.getElementById("scroll-cta")?.addEventListener("click", () => scrollToSection("about"));
+
+document.getElementById("back-to-start")?.addEventListener("click", () => {
+  closePopups();
+  window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
+});
 
 window.addEventListener("wheel", (e) => {
   if (!canScrollPage()) return;
@@ -557,6 +596,33 @@ window.addEventListener("wheel", (e) => {
     e.preventDefault();
     window.scrollBy({ top: deltaX, left: 0, behavior: "auto" });
   }
+}, { passive: false });
+
+/* touch drag: pull the world sideways to ride (phones) */
+let touchX = 0, touchY = 0, touchAxis = null, touchOnNav = false;
+
+window.addEventListener("touchstart", (e) => {
+  if (e.touches.length !== 1) return;
+  touchX = e.touches[0].clientX;
+  touchY = e.touches[0].clientY;
+  touchAxis = null;
+  touchOnNav = !!e.target.closest("#topnav"); // the dock scrolls itself
+}, { passive: true });
+
+window.addEventListener("touchmove", (e) => {
+  if (touchOnNav || !canScrollPage() || e.touches.length !== 1) return;
+  const dx = e.touches[0].clientX - touchX;
+  const dy = e.touches[0].clientY - touchY;
+  if (touchAxis === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+    touchAxis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+  }
+  if (touchAxis === "x") {
+    e.preventDefault();
+    // dragging the world left rides forward
+    window.scrollBy({ top: -dx, left: 0, behavior: "auto" });
+  }
+  touchX = e.touches[0].clientX;
+  touchY = e.touches[0].clientY;
 }, { passive: false });
 
 function frame(now) {

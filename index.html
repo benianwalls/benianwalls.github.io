@@ -120,14 +120,14 @@
 <!-- floating section dock -->
 <nav id="topnav" class="mono" aria-label="Sections">
   <span id="nav-slider" aria-hidden="true"></span>
-  <a data-target="start">home</a>
-  <a data-target="about">about</a>
-  <a data-target="experience">experience</a>
-  <a data-target="projects">projects</a>
-  <a data-target="skills">skills</a>
-  <a data-target="education">education</a>
-  <a data-target="leadership">leadership</a>
-  <a data-target="contact">contact</a>
+  <a href="#start" data-target="start">home</a>
+  <a href="#about" data-target="about">about</a>
+  <a href="#experience" data-target="experience">experience</a>
+  <a href="#projects" data-target="projects">projects</a>
+  <a href="#skills" data-target="skills">skills</a>
+  <a href="#education" data-target="education">education</a>
+  <a href="#leadership" data-target="leadership">leadership</a>
+  <a href="#contact" data-target="contact">contact</a>
 </nav>
 
 <!-- badge counter -->
@@ -156,7 +156,10 @@
       <div class="scroll-hint">
         <span class="mono">An interactive resume: scroll to ride | click the buildings to explore</span>
         <span class="mono hint2">The rider, trees &amp; glowing badges are clickable too</span>
-        <span class="chevron">▾</span>
+        <button class="scroll-cta mono" id="scroll-cta">
+          <span class="cta-desktop">scroll to ride</span><span class="cta-mobile">swipe to ride</span>
+          <span class="chevron">▾</span>
+        </button>
       </div>
     </div>
   </section>
@@ -388,6 +391,7 @@
         <a href="https://github.com/benianwalls" target="_blank" rel="noopener" class="contact-btn">🐙 GitHub</a>
         <a href="assets/BenianWalls-Resume.pdf" download class="contact-btn">📄 Download Resume</a>
       </div>
+      <button class="back-to-start mono" id="back-to-start">⟲ ride back to the trailhead</button>
       <p class="mono footer-note">© 2026 Benian Walls — built with way too much time</p>
     </div>
   </div>
