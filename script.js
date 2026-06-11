@@ -511,6 +511,12 @@ function moveSlider(i) {
   const a = navLinks[i];
   navSlider.style.width = a.offsetWidth + "px";
   navSlider.style.transform = `translateX(${a.offsetLeft}px)`;
+  // keep the active link visible when the dock overflows (narrow screens)
+  const nav = a.closest("#topnav");
+  nav.scrollTo({
+    left: a.offsetLeft - (nav.clientWidth - a.offsetWidth) / 2,
+    behavior: "smooth",
+  });
 }
 
 function updateNav(scrollPos) {
