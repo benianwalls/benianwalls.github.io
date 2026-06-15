@@ -4,7 +4,7 @@ A scroll-driven personal site: a mountain biker rides through a parallax mountai
 world while resume sections appear as trail checkpoints. Day turns to night as you
 ride, the bike's headlight comes on, and mile-marker signposts pass by at each section.
 
-No build step, no dependencies — plain HTML / CSS / JS.
+No build step, no dependencies, plain HTML / CSS / JS.
 
 ## Run locally
 
@@ -15,16 +15,7 @@ python3 -m http.server 4173
 
 (or just double-click `index.html`)
 
-## Deploy free on GitHub Pages
 
-```bash
-git init
-git add .
-git commit -m "Initial site"
-gh repo create benianwalls.github.io --public --source . --push
-```
-
-Then it's live at **https://benianwalls.github.io** within a minute or two.
 
 ## Where things live
 
