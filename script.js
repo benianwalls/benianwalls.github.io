@@ -3,11 +3,20 @@
    ===================================================== */
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const isTouch = window.matchMedia("(hover: none)").matches;
+const TAP_WORD = isTouch ? "tap" : "click";
 
 /* ---------- helpers ---------- */
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 const rand = (min, max) => min + Math.random() * (max - min);
+
+/* track whether the last interaction came from the keyboard so we can
+   ride to landmarks that receive focus via Tab (but not via pointer) */
+let usingKeyboard = false;
+window.addEventListener("keydown", (e) => { if (e.key === "Tab") usingKeyboard = true; }, true);
+window.addEventListener("mousedown", () => { usingKeyboard = false; }, true);
+window.addEventListener("touchstart", () => { usingKeyboard = false; }, true);
 
 /* ---------- layer speeds (px of layer motion per px of scroll) ---------- */
 const SPEEDS = { far: 0.06, mid: 0.16, near: 0.34, ground: 1.0, foreground: 1.45 };
@@ -154,13 +163,17 @@ function buildGround() {
       lm.tabIndex = 0;
       lm.setAttribute("role", "button");
       lm.setAttribute("aria-label", `Open ${id} details`);
-      lm.innerHTML = `<div class="lm-label mono">${LM_LABELS[id]} <span class="lm-click">· click</span></div>${LANDMARK_ART[id]}`;
+      lm.innerHTML = `<div class="lm-label mono">${LM_LABELS[id]} <span class="lm-click">· ${TAP_WORD}</span></div>${LANDMARK_ART[id]}`;
       lm.style.left = (x + 80) + "px";
       lm.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           openPopup(id);
         }
+      });
+      // tabbing to an off-screen building rides the trail to it
+      lm.addEventListener("focus", () => {
+        if (usingKeyboard) scrollToSection(id);
       });
       frag.appendChild(lm);
     }
@@ -220,7 +233,7 @@ function buildStars() {
 
 const LM_LABELS = {
   about: "🏠 home · about me",
-  experience: "🏢 work ·experience",
+  experience: "🏢 work · experience",
   projects: "🔧 garage · projects",
   skills: "🛠 gear shop · skills",
   education: "🏫 school · education",
@@ -555,7 +568,12 @@ function updateNav(scrollPos) {
   for (let k = 0; k < navTops.length; k++) if (pos >= navTops[k]) i = k;
   if (i !== activeNav) {
     activeNav = i;
-    navLinks.forEach((a, k) => a.classList.toggle("active", k === i));
+    navLinks.forEach((a, k) => {
+      const on = k === i;
+      a.classList.toggle("active", on);
+      if (on) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+    });
     moveSlider(i);
   }
 }
@@ -618,6 +636,9 @@ typeIntro();
 const tourBtn = document.getElementById("tour-btn");
 const TOUR_ORDER = ["about", "experience", "projects", "skills", "education", "leadership", "contact"];
 let tourActive = false;
+let tourPopupOpen = false; // true while a tour card is open and awaiting the visitor
+
+const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
 
 function tweenScroll(to, duration) {
   return new Promise((resolve) => {
@@ -626,13 +647,14 @@ function tweenScroll(to, duration) {
       return resolve(true);
     }
     const from = window.scrollY;
+    const change = to - from;
     const start = performance.now();
     (function step(now) {
       if (!tourActive) return resolve(false);
       const t = clamp((now - start) / duration, 0, 1);
-      // linear pace — the scene's lerp already softens the start and stop,
-      // so the bike rides at a steady cadence between landmarks
-      window.scrollTo(0, from + (to - from) * t);
+      // gentle accel/decel; CSS smooth-scroll is disabled during the tour so
+      // each step lands instantly and this curve drives the whole motion
+      window.scrollTo(0, Math.round(from + change * easeInOutSine(t)));
       if (t < 1) requestAnimationFrame(step);
       else resolve(true);
     })(performance.now());
@@ -650,9 +672,23 @@ function tourPause(ms) {
   });
 }
 
+// resolves once the visitor closes the open card (or false if the tour stops)
+function waitForPopupClose() {
+  return new Promise((resolve) => {
+    (function check() {
+      if (!tourActive) return resolve(false);
+      if (!document.querySelector(".popup.open")) return resolve(true);
+      requestAnimationFrame(check);
+    })();
+  });
+}
+
 async function startTour() {
   tourActive = true;
   document.body.classList.add("touring");
+  // disable CSS smooth-scroll so our per-frame steps don't fight the browser's
+  // own scroll animation (the cause of the stutter)
+  document.documentElement.style.scrollBehavior = "auto";
   tourBtn.textContent = "■ stop tour";
   closePopups();
   for (let i = 0; i < TOUR_ORDER.length; i++) {
@@ -664,26 +700,33 @@ async function startTour() {
     if (!(await tweenScroll(y, duration))) return;
     if (!(await tourPause(450))) return; // let the scene settle at the landmark
     openPopup(id);
-    if (i === TOUR_ORDER.length - 1) break; // end the ride on "Let's Connect"
-    if (!(await tourPause(3400))) return; // linger so the card can be read
-    closePopups();
-    if (!(await tourPause(350))) return;
+    if (i === TOUR_ORDER.length - 1) break; // finale: leave "Let's Connect" open
+    // ride on only once the visitor closes the card
+    tourPopupOpen = true;
+    if (!(await waitForPopupClose())) return;
+    tourPopupOpen = false;
+    if (!(await tourPause(350))) return; // brief beat before the next leg
   }
   stopTour();
 }
 
 function stopTour() {
   tourActive = false;
+  tourPopupOpen = false;
   document.body.classList.remove("touring");
+  document.documentElement.style.scrollBehavior = "";
   if (tourBtn) tourBtn.textContent = "▶ take the tour";
 }
 
 tourBtn?.addEventListener("click", () => (tourActive ? stopTour() : startTour()));
 
-// any manual input hands control back to the rider
+// manual input during a ride leg hands control back; but while a tour card is
+// open we expect the visitor to read, scroll, and close it (which advances)
 for (const evt of ["wheel", "touchstart", "keydown", "mousedown"]) {
   window.addEventListener(evt, (e) => {
-    if (tourActive && !e.target?.closest?.("#tour-btn")) stopTour();
+    if (!tourActive || tourPopupOpen) return;
+    if (e.target?.closest?.("#tour-btn")) return;
+    stopTour();
   }, { passive: true });
 }
 
@@ -829,7 +872,21 @@ window.addEventListener("resize", () => {
   }, 200);
 });
 
+/* deep links: visiting /#projects (etc.) rides to that landmark and opens it */
+function openFromHash() {
+  const id = location.hash.slice(1);
+  if (!LM_LABELS[id]) return;
+  const y = sectionScrollTargets[id];
+  if (y != null) {
+    target = y;
+    window.scrollTo(0, y);
+  }
+  openPopup(id);
+}
+window.addEventListener("hashchange", openFromHash);
+
 buildScene();
 cacheNavTops();
 updateNav(window.scrollY);
+openFromHash();
 requestAnimationFrame(frame);

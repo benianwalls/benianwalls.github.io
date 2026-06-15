@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Benian Walls — Cybersecurity &amp; Global Policy</title>
-<meta name="description" content="Benian Walls — cybersecurity student at Indiana University. Scroll to ride through my experience, projects, and skills." />
+<title>Benian Walls | Cybersecurity &amp; Global Policy</title>
+<meta name="description" content="Benian Walls, cybersecurity student at Indiana University. Scroll to ride through my experience, projects, and skills." />
+<meta name="theme-color" content="#8ecae6" />
 <!-- link preview card (Open Graph + Twitter) -->
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Benian Walls | Cybersecurity & Global Policy" />
@@ -14,7 +15,7 @@
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Benian Walls — Cybersecurity & Global Policy" />
+<meta name="twitter:title" content="Benian Walls | Cybersecurity & Global Policy" />
 <meta name="twitter:description" content="An interactive resume: scroll to ride through the mountains." />
 <meta name="twitter:image" content="https://benianwalls.github.io/assets/og.png" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚵</text></svg>" />
@@ -131,7 +132,7 @@
 </nav>
 
 <!-- badge counter -->
-<div id="hud" class="mono" title="Glowing badges are hidden along the trail — click them!">🏅 <span id="badge-count">0</span>/<span id="badge-total">7</span></div>
+<div id="hud" class="mono" title="Glowing badges are hidden along the trail, click them!">🏅 <span id="badge-count">0</span>/<span id="badge-total">7</span></div>
 
 <!-- hacker mode toggle (appears once all badges are collected) -->
 <button id="hack-toggle" class="mono" hidden>ENTER HACKER MODE</button>
@@ -140,7 +141,7 @@
 <!-- all-badges-collected toast -->
 <div id="toast">
   <strong>🏆 TRAIL MASTER</strong>
-  <p class="mono">All 7 badges collected — HACKER MODE unlocked.</p>
+  <p class="mono">All 7 badges collected. HACKER MODE unlocked.</p>
 </div>
 
 <!-- ===== SCROLLING CONTENT ===== -->
@@ -169,7 +170,7 @@
     </div>
   </section>
 
-  <!-- the ride: empty trail sections — the world landmarks carry the content -->
+  <!-- the ride: empty trail sections; the world landmarks carry the content -->
   <section class="panel" id="about"></section>
   <section class="panel" id="experience"></section>
   <section class="panel" id="projects"></section>
@@ -186,10 +187,10 @@
   <div class="popup" id="popup-about" role="dialog" aria-modal="true" aria-label="About Me">
     <div class="card popup-panel">
       <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">MILE 01 — WHO'S RIDING</p>
+      <p class="mono kicker">MILE 01 · WHO'S RIDING</p>
       <h2>About Me</h2>
       <div class="about-flex">
-        <img class="portrait" src="assets/headshot.jpg" alt="Benian Walls" onerror="this.style.display='none'" />
+        <img class="portrait" src="assets/headshot.jpg" alt="Benian Walls" loading="lazy" onerror="this.style.display='none'" />
         <p>I’m a cybersecurity student at Indiana University’s Luddy School of Informatics, Computing, and Engineering, graduating in May 2028. I enjoy learning both the technical and broader sides of security, from working with vulnerability management, phishing simulations, and SIEM tools to understanding how cybersecurity impacts organizations and the world around us.</p>
       </div>
       <ul class="fact-list">
@@ -201,15 +202,15 @@
       </ul>
       <div class="photo-strip">
         <figure class="polaroid tilt-l">
-          <img src="assets/fishing.jpg" alt="Benian holding a freshly caught bass on a lake boardwalk" onerror="this.closest('.polaroid').style.display='none'" />
+          <img src="assets/fishing.jpg" alt="Benian holding a freshly caught bass on a lake boardwalk" loading="lazy" onerror="this.closest('.polaroid').style.display='none'" />
           <figcaption class="mono">caught one 🎣</figcaption>
         </figure>
         <figure class="polaroid tilt-r">
-          <img src="assets/travel.jpg" alt="Benian in San Francisco with the Bay Bridge behind him" onerror="this.closest('.polaroid').style.display='none'" />
+          <img src="assets/travel.jpg" alt="Benian in San Francisco with the Bay Bridge behind him" loading="lazy" onerror="this.closest('.polaroid').style.display='none'" />
           <figcaption class="mono">san francisco 🌉</figcaption>
         </figure>
         <figure class="polaroid tilt-l">
-          <img src="assets/bike.jpg" alt="Benian and a riding buddy holding their bikes in front of a covered bridge" onerror="this.closest('.polaroid').style.display='none'" />
+          <img src="assets/bike.jpg" alt="Benian and a riding buddy holding their bikes in front of a covered bridge" loading="lazy" onerror="this.closest('.polaroid').style.display='none'" />
           <figcaption class="mono">actual trails 🚵</figcaption>
         </figure>
       </div>
@@ -219,15 +220,15 @@
   <div class="popup" id="popup-experience" role="dialog" aria-modal="true" aria-label="Experience">
     <div class="card popup-panel">
       <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">MILE 02 — THE CLIMB</p>
+      <p class="mono kicker">MILE 02 · THE CLIMB</p>
       <h2>Experience</h2>
 
       <div class="job club-job">
-        <img class="club-logo" src="assets/indianapolis_airport_authority_logo.jpeg" alt="Indianapolis Airport Authority logo" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/indianapolis_airport_authority_logo.jpeg" alt="Indianapolis Airport Authority logo" loading="lazy" onerror="this.style.display='none'" />
         <div class="club-body">
         <div class="job-head">
           <h3>Cybersecurity Intern</h3>
-          <span class="mono when">May 2026 — Present</span>
+          <span class="mono when">May 2026 - Present</span>
         </div>
         <p class="org">Indianapolis Airport Authority · Indianapolis, IN</p>
         <ul>
@@ -238,23 +239,23 @@
       </div>
 
       <div class="job club-job">
-        <img class="club-logo" src="assets/byteshield_sol.jpeg" alt="ByteShield Solutions logo" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/byteshield_sol.jpeg" alt="ByteShield Solutions logo" loading="lazy" onerror="this.style.display='none'" />
         <div class="club-body">
         <div class="job-head">
           <h3>Contracted Security Solutions Specialist</h3>
-          <span class="mono when">Aug 2025 — Present</span>
+          <span class="mono when">Aug 2025 - Present</span>
         </div>
         <p class="org">ByteShield Solutions · Bloomington, IN</p>
         <ul>
           <li>Conducted Nessus scans, reporting 35+ high-risk issues per project with 95% remediation</li>
-          <li>Reviewed firewalls, devices, and network rules — reduced unauthorized access attempts by 40%</li>
+          <li>Reviewed firewalls, devices, and network rules, reducing unauthorized access attempts by 40%</li>
           <li>Built GoPhish phishing campaigns that cut risky clicks by 45%</li>
         </ul>
         </div>
       </div>
 
       <div class="job club-job">
-        <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" loading="lazy" onerror="this.style.display='none'" />
         <div class="club-body">
         <div class="job-head">
           <h3>Student IT Support <span class="badge">incoming</span></h3>
@@ -272,7 +273,7 @@
   <div class="popup" id="popup-projects" role="dialog" aria-modal="true" aria-label="Projects">
     <div class="card popup-panel">
       <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">MILE 03 — BUILDS</p>
+      <p class="mono kicker">MILE 03 · BUILDS</p>
       <h2>Projects</h2>
 
       <div class="project">
@@ -292,7 +293,7 @@
   <div class="popup" id="popup-skills" role="dialog" aria-modal="true" aria-label="Skills">
     <div class="card popup-panel">
       <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">MILE 04 — GEAR CHECK</p>
+      <p class="mono kicker">MILE 04 · GEAR CHECK</p>
       <h2>Skills</h2>
       <div class="skill-group">
         <h4 class="mono">SECURITY &amp; NETWORKING</h4>
@@ -318,10 +319,10 @@
   <div class="popup" id="popup-education" role="dialog" aria-modal="true" aria-label="Education and Certificates">
     <div class="card popup-panel">
       <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">MILE 05 — SUMMIT ROUTE</p>
+      <p class="mono kicker">MILE 05 · SUMMIT ROUTE</p>
       <h2>Education &amp; Certs</h2>
       <div class="job club-job">
-        <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" loading="lazy" onerror="this.style.display='none'" />
         <div class="club-body">
         <div class="job-head">
           <h3>B.S. Cybersecurity &amp; Global Policy</h3>
@@ -334,7 +335,7 @@
         </div>
       </div>
       <div class="job club-job">
-        <img class="club-logo" src="assets/google.png" alt="Google logo" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/google.png" alt="Google logo" loading="lazy" onerror="this.style.display='none'" />
         <div class="club-body">
         <div class="job-head">
           <h3>Google Cybersecurity Certificate</h3>
@@ -342,7 +343,7 @@
         </div>
         <p class="org">Coursera</p>
         <ul>
-          <li>Network security, risk management, threat analysis, incident response — hands-on with Linux, Wireshark, and SQL</li>
+          <li>Network security, risk management, threat analysis, incident response; hands-on with Linux, Wireshark, and SQL</li>
         </ul>
         </div>
       </div>
@@ -352,14 +353,14 @@
   <div class="popup" id="popup-leadership" role="dialog" aria-modal="true" aria-label="Leadership">
     <div class="card popup-panel">
       <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">MILE 06 — RIDING WITH THE PACK</p>
+      <p class="mono kicker">MILE 06 · RIDING WITH THE PACK</p>
       <h2>Leadership</h2>
       <div class="job club-job">
-        <img class="club-logo" src="assets/ingineering.jpg" alt="INgineering at IU club logo" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/ingineering.jpg" alt="INgineering at IU club logo" loading="lazy" onerror="this.style.display='none'" />
         <div class="club-body">
         <div class="job-head">
-          <h3>President — Ingineering Club</h3>
-          <span class="mono when">Apr 2026 — Present</span>
+          <h3>President, Ingineering Club</h3>
+          <span class="mono when">Apr 2026 - Present</span>
         </div>
         <p class="org">Indiana University</p>
         <ul>
@@ -369,11 +370,11 @@
         </div>
       </div>
       <div class="job club-job">
-        <img class="club-logo" src="assets/cyberclub.jpeg" alt="IU Cybersecurity Club logo" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/cyberclub.jpeg" alt="IU Cybersecurity Club logo" loading="lazy" onerror="this.style.display='none'" />
         <div class="club-body">
         <div class="job-head">
-          <h3>Member — Cybersecurity Club</h3>
-          <span class="mono when">Sep 2024 — Present</span>
+          <h3>Member, Cybersecurity Club</h3>
+          <span class="mono when">Sep 2024 - Present</span>
         </div>
         <p class="org">Indiana University</p>
         <ul>
@@ -397,7 +398,7 @@
         <a href="assets/BenianWalls-Resume.pdf" download class="contact-btn">📄 Download Resume</a>
       </div>
       <button class="back-to-start mono" id="back-to-start">⟲ ride back to the trailhead</button>
-      <p class="mono footer-note">© 2026 Benian Walls — built with way too much time</p>
+      <p class="mono footer-note">© 2026 Benian Walls · built with way too much time</p>
     </div>
   </div>
 
