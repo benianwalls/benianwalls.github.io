@@ -479,8 +479,8 @@ body.riding .scroll-hint {
   50% { transform: translateX(6px); opacity: 1; }
 }
 @media (max-width: 768px) {
-  .scroll-cta .chev { display: none; }
-  .scroll-cta .cta-pill { display: inline-flex; }
+  /* hide the scroll CTA on phones; it overlaps the bike */
+  .scroll-cta { display: none; }
 }
 
 /* cards — liquid glass */
