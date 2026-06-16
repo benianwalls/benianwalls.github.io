@@ -1,4 +1,4 @@
-# benianwalls.com — interactive resume
+# benianwalls.com | interactive resume
 
 A scroll-driven personal site: a mountain biker rides through a parallax mountain
 world while resume sections appear as trail checkpoints. Day turns to night as you
