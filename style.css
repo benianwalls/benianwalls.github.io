@@ -601,7 +601,7 @@ body.hacked .card h2 { background: none; -webkit-text-fill-color: currentColor; 
   gap: 0.3rem;
 }
 .job h3 { font-size: 1.2rem; }
-.when { font-size: 0.78rem; color: #6a7468; letter-spacing: 0.04em; }
+.when { font-size: 0.78rem; color: #6a7468; letter-spacing: 0.04em; margin-left: auto; white-space: nowrap; }
 .org { font-size: 0.92rem; color: var(--orange); font-weight: 500; margin: 0.2rem 0 0.5rem; }
 .job ul { padding-left: 1.2rem; display: grid; gap: 0.35rem; }
 .job li { line-height: 1.55; }
