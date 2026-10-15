@@ -24,156 +24,40 @@ body {
 
 .mono { font-family: var(--mono); }
 
-/* ============ FIXED SCENE ============ */
+/* ============ FIXED 3D SCENE ============ */
 #scene {
   position: fixed;
   inset: 0;
   overflow: hidden;
   z-index: 0;
-}
-
-.sky {
-  position: absolute; inset: 0;
   background: linear-gradient(to bottom, #8ecae6 0%, #bde3f0 45%, #ffd9a0 78%, #ffb677 100%);
 }
+#gl { display: block; width: 100%; height: 100%; touch-action: pan-y pinch-zoom; }
+body.pointing #gl { cursor: pointer; }
 
-.sky-night {
-  position: absolute; inset: 0;
-  background: linear-gradient(to bottom, #060a18 0%, #0d1530 50%, #2a2150 85%, #4a2b4d 100%);
-  opacity: 0;
-}
-
-#stars {
-  position: absolute; inset: 0 0 30% 0;
-  opacity: 0;
-}
-#stars .star {
+/* labels pinned over the 3D buildings (positioned by world.js) */
+#lm-layer { position: absolute; inset: 0; pointer-events: none; }
+.lm-tag {
   position: absolute;
-  background: #fff;
-  border-radius: 50%;
-  animation: twinkle 3s ease-in-out infinite;
-}
-@keyframes twinkle {
-  0%, 100% { opacity: 0.9; }
-  50% { opacity: 0.25; }
-}
-
-#sun {
-  position: absolute;
-  width: 90px; height: 90px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff6d6 30%, #ffd166 60%, rgba(255, 209, 102, 0) 75%);
-  box-shadow: 0 0 80px 30px rgba(255, 209, 102, 0.45);
-  left: 70%; top: 18%;
-}
-
-.layer {
-  position: absolute;
-  bottom: 0; left: 0;
-  will-change: transform;
-}
-
-#mtn-far  { height: 70vh; }
-#mtn-mid  { height: 55vh; }
-#mtn-near { height: 42vh; }
-#ground   { height: 150px; }
-#foreground { height: 90px; }
-
-.layer svg { display: block; height: 100%; }
-
-/* ground strip */
-#ground .ground-base {
-  position: absolute; inset: 0;
-  background: linear-gradient(to bottom, #24382a 0%, #1a2b20 30%, #14231a 100%);
-}
-#ground .trail-line {
-  position: absolute; left: 0; right: 0; top: 38px;
-  height: 7px;
-  background: repeating-linear-gradient(90deg, #c8a06a 0 70px, #b08850 70px 90px);
-  border-radius: 4px;
-  opacity: 0.85;
-}
-
-/* trees & rocks (built in JS) */
-.tree {
-  position: absolute;
-  bottom: 30px;
-  width: 0; height: 0;
-}
-.tree .canopy {
-  position: absolute; bottom: 14px; left: 50%;
-  transform: translateX(-50%);
-  width: 0; height: 0;
-  border-left: 22px solid transparent;
-  border-right: 22px solid transparent;
-  border-bottom: 64px solid #1d3d28;
-}
-.tree .canopy.c2 { bottom: 38px; border-bottom-width: 50px; border-left-width: 17px; border-right-width: 17px; }
-.tree .canopy.c3 { bottom: 60px; border-bottom-width: 38px; border-left-width: 13px; border-right-width: 13px; }
-.tree .trunk {
-  position: absolute; bottom: 0; left: 50%;
-  transform: translateX(-50%);
-  width: 8px; height: 18px;
-  background: #4a3424;
-  border-radius: 2px;
-}
-
-.rock {
-  position: absolute; bottom: 26px;
-  background: #3d4a42;
-  border-radius: 45% 55% 50% 50% / 70% 65% 35% 30%;
-}
-
-.signpost {
-  position: absolute; bottom: 34px;
-  width: 0;
-}
-.signpost .post {
-  position: absolute; bottom: 0; left: -3px;
-  width: 6px; height: 52px;
-  background: #5a4330;
-  border-radius: 2px;
-}
-.signpost .sign {
-  position: absolute; bottom: 44px; left: -8px;
-  background: #7a5c3e;
-  color: #f5ead5;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  padding: 4px 10px 4px 8px;
-  white-space: nowrap;
-  border-radius: 2px;
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 50%, calc(100% - 9px) 100%, 0 100%);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.35);
-}
-
-/* landmarks — clickable buildings along the trail */
-.landmark {
-  position: absolute;
-  bottom: 104px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  left: 0; top: 0;
+  pointer-events: auto;
+  border: 0;
+  background: none;
+  padding: 0 0 6px;
+  font: inherit;
   cursor: pointer;
-  transform-origin: bottom center;
-  transition: transform 0.2s ease;
+  will-change: transform, opacity;
 }
-.landmark:hover { transform: scale(1.04); }
-.landmark:focus-visible {
-  outline: 3px solid var(--orange);
-  outline-offset: 6px;
-  border-radius: 8px;
-}
-.landmark svg { display: block; filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.25)); }
+.lm-tag:focus-visible { outline: none; }
+.lm-tag:focus-visible .lm-label { outline: 3px solid var(--orange); outline-offset: 3px; }
 
 .lm-label {
+  display: inline-block;
   font-size: 0.7rem;
   letter-spacing: 0.06em;
   white-space: nowrap;
   color: #14231a;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.55));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.6));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.6);
@@ -181,45 +65,44 @@ body {
   padding: 6px 13px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   animation: label-bob 2.2s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+.lm-tag:hover .lm-label { box-shadow: 0 6px 20px rgba(255, 122, 61, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.8); }
 .lm-click { color: var(--orange); font-weight: 700; }
 @keyframes label-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-7px); }
 }
+body.night .lm-label { background: linear-gradient(180deg, rgba(255, 250, 235, 0.88), rgba(255, 244, 220, 0.72)); }
+body.hacked .lm-label { background: rgba(3, 16, 9, 0.85); color: #7dffb0; border-color: rgba(0, 255, 140, 0.35); }
 
-/* building windows: dark by day, warm glow at night */
-.lm-window { fill: #51626b; transition: fill 0.6s ease; }
-body.night .lm-window {
-  fill: #ffd166;
-  filter: drop-shadow(0 0 6px rgba(255, 209, 102, 0.8));
+/* first-paint loader while the world is generated */
+#loader {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: linear-gradient(to bottom, #8ecae6 0%, #bde3f0 55%, #ffd9a0 100%);
+  color: #14231a;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  transition: opacity 0.8s ease;
 }
-
-/* foreground bushes */
-.bush {
-  position: absolute; bottom: -12px;
-  background: #0b150f;
-  border-radius: 50% 50% 0 0;
-}
-
-/* ============ BIKER ============ */
-#biker {
-  position: absolute;
-  left: 14%;
-  bottom: 84px;
-  width: 270px;
-  will-change: transform;
-  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.35));
-}
-
-#dust {
-  position: absolute;
-  left: 10px; bottom: 2px;
-  width: 60px; height: 14px;
+#loader.done { opacity: 0; pointer-events: none; }
+.loader-wheel {
+  width: 46px; height: 46px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(200, 160, 106, 0.55), transparent 70%);
-  opacity: 0;
+  border: 5px solid #1c1f24;
+  background:
+    linear-gradient(#b6bec9, #b6bec9) center / 2px 100% no-repeat,
+    linear-gradient(#b6bec9, #b6bec9) center / 100% 2px no-repeat;
+  animation: spin 0.9s linear infinite;
 }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ============ PROGRESS BAR ============ */
 #trail-progress {
@@ -337,6 +220,12 @@ main { position: relative; z-index: 10; pointer-events: none; }
 
 /* hero */
 .hero { align-items: flex-start; padding-top: 16vh; }
+/* soft scrim so the headline reads over the 3D scene */
+.hero { background: linear-gradient(90deg, rgba(236, 244, 246, 0.72) 0%, rgba(236, 244, 246, 0.45) 32%, rgba(236, 244, 246, 0) 58%); }
+@media (max-width: 900px) {
+  .hero { background: linear-gradient(180deg, rgba(236, 244, 246, 0.75) 0%, rgba(236, 244, 246, 0.5) 45%, rgba(236, 244, 246, 0) 70%); }
+}
+body.hacked .hero { background: linear-gradient(90deg, rgba(2, 8, 5, 0.8) 0%, rgba(2, 8, 5, 0) 60%); }
 
 /* cinematic entrance: hero copy rises in, staggered */
 @keyframes rise-in {
@@ -351,13 +240,6 @@ main { position: relative; z-index: 10; pointer-events: none; }
 .hero-inner > *:nth-child(5) { animation-delay: 0.75s; }
 .hero-inner > *:nth-child(6) { animation-delay: 0.95s; }
 
-/* the biker rolls in from the left on load (backwards fill only, so the
-   scroll-driven inline transform takes over once the entrance finishes) */
-@keyframes biker-in {
-  from { transform: translateX(-65vw); }
-  to { transform: translateX(0); }
-}
-#biker { animation: biker-in 1.5s cubic-bezier(0.22, 0.9, 0.3, 1) 0.25s backwards; }
 .hero-inner h1 {
   font-size: clamp(3.4rem, 11vw, 8.5rem);
   line-height: 0.95;
@@ -831,46 +713,6 @@ body.hacked .popup-close { background: #04140c; color: #41ff9a; border-color: #1
 }
 
 /* ============ CLICKABLE WORLD ============ */
-#biker, .tree, .rock, .signpost .sign, .collectible { cursor: pointer; }
-
-/* tree shake (wrapper so it doesn't fight the per-tree scale) */
-.sway { position: absolute; bottom: 0; left: 0; transform-origin: bottom center; }
-.sway.shaking { animation: tree-shake 0.55s ease; }
-@keyframes tree-shake {
-  0%, 100% { transform: rotate(0); }
-  20% { transform: rotate(7deg); }
-  45% { transform: rotate(-6deg); }
-  70% { transform: rotate(3deg); }
-}
-
-.rock.bouncing { animation: rock-bounce 0.45s ease; }
-@keyframes rock-bounce {
-  0%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-16px); }
-  70% { transform: translateY(0); }
-  85% { transform: translateY(-6px); }
-}
-
-/* collectible badges */
-.collectible {
-  position: absolute;
-  bottom: 150px;
-  font-size: 30px;
-  line-height: 1;
-  user-select: none;
-  filter: drop-shadow(0 0 9px rgba(255, 209, 102, 0.9));
-  animation: float-bob 2.4s ease-in-out infinite;
-}
-@keyframes float-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-13px); }
-}
-.collectible.collected { animation: badge-pop 0.55s ease forwards; pointer-events: none; }
-@keyframes badge-pop {
-  40% { transform: scale(1.6) rotate(12deg); opacity: 1; }
-  100% { transform: scale(0) rotate(40deg); opacity: 0; }
-}
-
 /* badge HUD */
 #hud {
   position: fixed;
@@ -983,7 +825,7 @@ body.hacked #scanlines { display: block; animation: flicker 4s linear infinite; 
   97% { opacity: 0.7; }
 }
 
-body.hacked #scene { filter: brightness(0.5) saturate(0.45) hue-rotate(75deg); }
+body.hacked #scene { background: #020805; }
 body.hacked { background: #020805; }
 
 body.hacked .card {
@@ -1016,9 +858,9 @@ body.hacked #toast p { color: #5fcf91; }
 
 /* ============ RESPONSIVE ============ */
 @media (max-width: 640px) {
-  #biker { width: 175px; bottom: 92px; left: 8%; }
   .panel { padding: 10vh 5vw; }
-  .signpost .sign { font-size: 9px; }
+  .lm-label { font-size: 0.62rem; padding: 5px 10px; }
+  .hint2 { display: none; }
   .about-flex { flex-direction: column; align-items: center; text-align: left; }
   .polaroid img { width: 150px; height: 185px; }
 }
@@ -1028,7 +870,7 @@ body.hacked #toast p { color: #5fcf91; }
   .reveal { opacity: 1; transform: none; transition: none; }
   .scroll-cta .chev { animation: none; opacity: 0.7; }
   .scroll-cta .cta-pill, .scroll-cta .pill-arrow { animation: none; }
-  .hero-inner > *, #biker { animation: none; }
+  .hero-inner > *, .lm-label { animation: none; }
   .term-cursor { animation: none; }
 }
 
@@ -1038,3 +880,5 @@ body.hacked #toast p { color: #5fcf91; }
   #hud { top: 64px; }
   #hack-toggle { top: 110px; }
 }
+
+.footer-note a { color: inherit; }
