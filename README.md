@@ -9,6 +9,12 @@ Built with [three.js](https://threejs.org) (vendored in `vendor/three`, MIT). No
 build step: everything in the world is generated in code, including the terrain,
 trees, buildings, and the rider (legs are driven by two-bone IK from the crank angle).
 
+Recruiters can skip the ride: the **⚡ 30-second version** button opens a one-card
+summary, and the **coach** in the corner answers questions about Benian. The coach
+reads `coach/knowledge.md` (keep it in sync with the resume) and answers instantly
+in the browser; set `<meta name="coach-endpoint">` to the deployed
+[`benian-coach`](../benian-coach) worker to have Claude answer instead.
+
 The original 2D version lives at `/classic/` and is the automatic fallback for
 browsers without WebGL.
 
@@ -25,6 +31,7 @@ python3 -m http.server 4173
 - `style.css` — colors, cards, labels, layout. Palette lives in `:root` at the top
 - `script.js` — UI: popups, dock, tour, badges, hacker mode, scroll → ride progress
 - `world.js` — the 3D world: terrain, props, landmark buildings, rider, sky, camera
+- `coach.js` + `coach/knowledge.md` — the recruiter coach and the facts it answers from
 
 ## Tweaking
 

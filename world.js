@@ -1681,7 +1681,7 @@ export async function createWorld({ canvas, quality }) {
     const w = window.innerWidth, h = window.innerHeight, aspect = w / h;
     const portrait = aspect < 0.9;
     const pull = portrait ? 1 + (1 / aspect - 0.9) * 0.4 : 1;
-    const hero = 1 - smooth(0, 0.075, progress);
+    const hero = 1 - smooth(0, 0.12, progress);
 
     // chase: off the near side, looking a little ahead
     tmpA.set(B.x - 3.4 * pull, B.y + 3.6 + (pull - 1) * 2, B.z + 13 * pull);

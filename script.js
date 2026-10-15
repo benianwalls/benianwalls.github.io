@@ -4,6 +4,7 @@
    ===================================================== */
 
 import { createWorld, SECTION_IDS } from "./world.js";
+import { initCoach } from "./coach.js";
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const isTouch = window.matchMedia("(hover: none)").matches;
@@ -302,6 +303,9 @@ window.addEventListener("scroll", () => {
 }, { passive: true });
 
 document.getElementById("scroll-cta")?.addEventListener("click", () => scrollToSection("about"));
+document.getElementById("quick-btn")?.addEventListener("click", () => openPopup("quick"));
+
+initCoach({ openPopup: (id) => { closePopups(); openPopup(id); } });
 
 /* =====================================================
    TERMINAL TYPEWRITER INTRO
@@ -454,7 +458,7 @@ window.addEventListener("touchstart", (e) => {
   touchX = e.touches[0].clientX;
   touchY = e.touches[0].clientY;
   touchAxis = null;
-  touchOnNav = !!e.target.closest("#topnav"); // the dock scrolls itself
+  touchOnNav = !!e.target.closest("#topnav, #coach"); // these scroll themselves
 }, { passive: true });
 
 window.addEventListener("touchmove", (e) => {

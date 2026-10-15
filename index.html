@@ -6,6 +6,8 @@
 <title>Benian Walls | Cybersecurity &amp; Global Policy</title>
 <meta name="description" content="Benian Walls, cybersecurity student at Indiana University. Scroll to ride through my experience, projects, and skills." />
 <meta name="theme-color" content="#8ecae6" />
+<!-- set to the deployed worker URL (see ../benian-coach) to answer with Claude; empty = instant in-browser answers -->
+<meta name="coach-endpoint" content="" />
 <link rel="canonical" href="https://benianwalls.com/" />
 <!-- link preview card (Open Graph + Twitter) -->
 <meta property="og:type" content="website" />
@@ -82,6 +84,7 @@
       <div class="hero-actions">
         <a class="btn-resume mono" href="assets/BenianWalls-Resume.pdf" download>⬇ download resume</a>
         <button class="btn-tour mono" id="tour-btn">▶ take the tour</button>
+        <button class="btn-quick mono" id="quick-btn">⚡ 30-second version</button>
       </div>
       <div class="scroll-hint">
         <span class="mono">An interactive resume: scroll to ride | click the buildings to explore</span>
@@ -109,6 +112,32 @@
 
 <!-- ===== LANDMARK POPUPS ===== -->
 <div id="popups">
+
+  <div class="popup" id="popup-quick" role="dialog" aria-modal="true" aria-label="Resume at a glance">
+    <div class="card popup-panel quick-card">
+      <button class="popup-close" aria-label="Close">✕</button>
+      <p class="mono kicker">// THE 30-SECOND VERSION</p>
+      <h2>Benian Walls</h2>
+      <p class="quick-lede">Cybersecurity &amp; Global Policy @ Indiana University · May 2028 · 3.63 GPA · Bloomington, IN</p>
+      <ul class="quick-list">
+        <li><strong>Cybersecurity Intern, Indianapolis Airport Authority</strong> <span class="mono when">2026</span><br/>Vulnerability management, SIEM monitoring, threat investigation, risk &amp; compliance.</li>
+        <li><strong>Security Solutions Specialist, ByteShield Solutions</strong> <span class="mono when">2025-now</span><br/>Nessus scans (35+ high-risk findings/project, 95% remediated), firewall reviews (-40% unauthorized access), GoPhish campaigns (-45% risky clicks).</li>
+        <li><strong>Student IT Support, IU UITS</strong> <span class="mono when">2026-now</span><br/>Account, device, Wi-Fi, and software support for students, faculty, and staff.</li>
+        <li><strong>Built:</strong> MalwareScope (ML malware detector, 79% detection at 0.1% FPR), an LLM Agent Security Lab, and a port scanner.</li>
+        <li><strong>Leads:</strong> President of the Ingineering Club (board of 7, 400+ members).</li>
+        <li><strong>Certs:</strong> Google Cybersecurity Certificate, IU GenAI 101.</li>
+      </ul>
+      <div class="chips quick-chips">
+        <span>Nessus</span><span>Nmap</span><span>Wireshark</span><span>GoPhish</span><span>Tanium</span><span>Arctic Wolf</span><span>Python</span><span>SQL</span><span>Linux</span><span>NIST</span>
+      </div>
+      <div class="contact-links">
+        <a href="mailto:bwalls06@outlook.com" class="contact-btn">📧 Email</a>
+        <a href="https://www.linkedin.com/in/benianwalls/" target="_blank" rel="noopener" class="contact-btn">💼 LinkedIn</a>
+        <a href="assets/BenianWalls-Resume.pdf" download class="contact-btn">📄 Resume PDF</a>
+      </div>
+      <p class="mono footer-note">Want details? Ride the trail, or ask the coach in the corner.</p>
+    </div>
+  </div>
 
   <div class="popup" id="popup-about" role="dialog" aria-modal="true" aria-label="About Me">
     <div class="card popup-panel">
