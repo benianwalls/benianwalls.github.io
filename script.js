@@ -9,9 +9,6 @@ import { icon, mountIcons } from "./icons.js";
 
 mountIcons();
 
-// design prototype switch: ?panel=soft previews the feathered card style
-if (new URLSearchParams(location.search).get("panel") === "soft") document.body.classList.add("soft-panels");
-
 /* a missing image hides itself (and its caption) instead of showing a broken icon */
 for (const img of document.images) {
   img.addEventListener("error", () => { (img.closest(".photo") ?? img).style.display = "none"; });
