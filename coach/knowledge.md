@@ -45,6 +45,7 @@ single bullets. Keep it in sync with the resume PDF.
 - As OpenAI Student Collective Campus Lead, Benian co-leads Indiana University's workshops, Studio Hours, and showcases where students build with ChatGPT and Codex.
 - Benian is President of the Ingineering Club at Indiana University (April 2026 to present), leading an executive board of 7 and a community of 400+ members.
 - As Ingineering Club president, Benian runs day-to-day operations: planning events, running meetings, and keeping projects organized.
+- Benian has been a member of the IU Cybersecurity Club since September 2024, doing hands-on ethical hacking, threat analysis, and network defense, and attending workshops on cloud security and malware analysis.
 
 ## Contact {#contact}
 - The best way to reach Benian is email: bwalls06@outlook.com
