@@ -5,6 +5,9 @@
 
 import { createWorld, SECTION_IDS } from "./world.js";
 import { initCoach } from "./coach.js";
+import { icon, mountIcons } from "./icons.js";
+
+mountIcons();
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const isTouch = window.matchMedia("(hover: none)").matches;
@@ -46,13 +49,13 @@ function measure() {
    ===================================================== */
 
 const LM_LABELS = {
-  about: "🏠 home · about me",
-  experience: "🏢 work · experience",
-  projects: "🔧 garage · projects",
-  skills: "🛠 gear shop · skills",
-  education: "🏫 school · education",
-  leadership: "🚩 club · leadership",
-  contact: "📮 mail · say hi",
+  about: ["home", "About"],
+  experience: ["building", "Experience"],
+  projects: ["wrench", "Projects"],
+  skills: ["sliders", "Skills"],
+  education: ["cap", "Education"],
+  leadership: ["flag", "Leadership"],
+  contact: ["mail", "Contact"],
 };
 
 const labelEls = {};
@@ -61,7 +64,8 @@ for (const id of SECTION_IDS) {
   b.className = "lm-tag";
   b.dataset.id = id;
   b.setAttribute("aria-label", `Open ${id} details`);
-  b.innerHTML = `<span class="lm-label mono">${LM_LABELS[id]} <span class="lm-click">· ${TAP_WORD}</span></span>`;
+  b.title = `${TAP_WORD === "tap" ? "Tap" : "Click"} to open`;
+  b.innerHTML = `<span class="lm-label">${icon(LM_LABELS[id][0])}${LM_LABELS[id][1]}${icon("arrow", "lm-go")}</span>`;
   b.style.visibility = "hidden";
   // tabbing to an off-screen building rides the trail to it
   b.addEventListener("focus", () => {
@@ -143,11 +147,7 @@ window.addEventListener("keydown", (e) => {
    CLICKABLE WORLD — badges, hops, shakes
    ===================================================== */
 
-const BADGE_ICONS = {
-  about: "🔒", experience: "🛡️", projects: "🐛",
-  skills: "🔑", education: "📡", leadership: "⛰️", contact: "🚩",
-};
-const BADGE_TOTAL = Object.keys(BADGE_ICONS).length;
+const BADGE_TOTAL = SECTION_IDS.length;
 const collected = new Set();
 
 const hud = document.getElementById("hud");
@@ -308,40 +308,16 @@ document.getElementById("quick-btn")?.addEventListener("click", () => openPopup(
 initCoach({ openPopup: (id) => { closePopups(); openPopup(id); } });
 
 /* =====================================================
-   TERMINAL TYPEWRITER INTRO
-   ===================================================== */
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-async function typeIntro() {
-  const el = document.getElementById("term-text");
-  if (!el) return;
-  const lines = ["$ ./ride_resume.sh --3d", "// TRAILHEAD"];
-  if (reducedMotion) {
-    el.textContent = lines.join("\n");
-    return;
-  }
-  await sleep(500);
-  for (let i = 0; i < lines.length; i++) {
-    for (const ch of lines[i]) {
-      el.textContent += ch;
-      await sleep(ch === " " ? 16 : 26 + Math.random() * 38);
-    }
-    if (i < lines.length - 1) {
-      await sleep(420);
-      el.textContent += "\n";
-    }
-  }
-}
-typeIntro();
-
-/* =====================================================
    AUTO-RIDE TOUR
    ===================================================== */
 
 const tourBtn = document.getElementById("tour-btn");
 let tourActive = false;
 let tourPopupOpen = false; // true while a tour card is open and awaiting the visitor
+
+function setTourBtn(ico, label) {
+  if (tourBtn) tourBtn.innerHTML = `${icon(ico)}<span>${label}</span>`;
+}
 
 const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
 
@@ -394,7 +370,7 @@ async function startTour() {
   // disable CSS smooth-scroll so our per-frame steps don't fight the browser's
   // own scroll animation (the cause of the stutter)
   document.documentElement.style.scrollBehavior = "auto";
-  tourBtn.textContent = "■ stop tour";
+  setTourBtn("stop", "Stop tour");
   closePopups();
   for (let i = 0; i < SECTION_IDS.length; i++) {
     const id = SECTION_IDS[i];
@@ -420,7 +396,7 @@ function stopTour() {
   tourPopupOpen = false;
   document.body.classList.remove("touring");
   document.documentElement.style.scrollBehavior = "";
-  if (tourBtn) tourBtn.textContent = "▶ take the tour";
+  setTourBtn("play", "Take the tour");
 }
 
 tourBtn?.addEventListener("click", () => (tourActive ? stopTour() : startTour()));
@@ -581,7 +557,7 @@ async function init() {
   });
 
   SECTION_IDS.forEach((id, i) => {
-    if (!collected.has(id)) world.addBadge(id, BADGE_ICONS[id], i);
+    if (!collected.has(id)) world.addBadge(id, i);
   });
 
   // returning trail masters keep their unlock

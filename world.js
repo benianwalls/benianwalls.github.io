@@ -10,6 +10,7 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { COIN_GLYPHS } from "./icons.js";
 
 /* ---------- helpers ---------- */
 const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
@@ -164,7 +165,7 @@ function tube(parent, r, material, a, b, seg = 8) {
   return m;
 }
 
-function textTexture(text, { w = 512, h = 112, bg = "#7a5c3e", fg = "#f5ead5", size = 50, font = '"JetBrains Mono", monospace', weight = 700, radius = 10 } = {}) {
+function textTexture(text, { w = 512, h = 112, bg = "#7a5c3e", fg = "#f5ead5", size = 50, font = '"IBM Plex Mono", monospace', weight = 600, radius = 10 } = {}) {
   const c = document.createElement("canvas");
   c.width = w; c.height = h;
   const g = c.getContext("2d");
@@ -212,7 +213,7 @@ export async function createWorld({ canvas, quality }) {
   // canvas text uses the site font — give it a moment to arrive
   try {
     await Promise.race([
-      document.fonts.load('700 40px "JetBrains Mono"'),
+      document.fonts.load('600 40px "IBM Plex Mono"'),
       new Promise((r) => setTimeout(r, 1500)),
     ]);
   } catch { /* fonts API unavailable: fall back to monospace */ }
@@ -1333,19 +1334,25 @@ export async function createWorld({ canvas, quality }) {
      ===================================================== */
 
   const badges = {};
-  function emojiTexture(emoji) {
+  /* gold face with the section's glyph engraved in it */
+  function coinTexture(id) {
     const c = document.createElement("canvas");
     c.width = c.height = 256;
     const g = c.getContext("2d");
-    const grd = g.createRadialGradient(128, 110, 20, 128, 128, 128);
-    grd.addColorStop(0, "#fff3c4");
-    grd.addColorStop(1, "#ffc94a");
+    const grd = g.createRadialGradient(110, 96, 20, 128, 128, 140);
+    grd.addColorStop(0, "#ffe9a8");
+    grd.addColorStop(1, "#f0b93a");
     g.fillStyle = grd;
     g.fillRect(0, 0, 256, 256);
-    g.font = '150px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
-    g.textAlign = "center";
-    g.textBaseline = "middle";
-    g.fillText(emoji, 128, 140);
+    g.strokeStyle = "rgba(122, 78, 10, 0.55)";
+    g.lineWidth = 6;
+    g.beginPath(); g.arc(128, 128, 104, 0, Math.PI * 2); g.stroke();
+    g.translate(128 - 12 * 6.2, 128 - 12 * 6.2);
+    g.scale(6.2, 6.2);
+    g.strokeStyle = "#6b4308";
+    g.lineWidth = 1.9;
+    g.lineCap = g.lineJoin = "round";
+    g.stroke(new Path2D(COIN_GLYPHS[id]));
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
     // cylinder caps map u along the axis we rotated away; turn the art upright
@@ -1354,12 +1361,12 @@ export async function createWorld({ canvas, quality }) {
     return t;
   }
 
-  function addBadge(id, emoji, i) {
+  function addBadge(id, i) {
     const x = lmX(i) - 27;
     const g = new THREE.Group();
     g.position.set(x, trailY(x) + 2.5, trailZ(x));
     const rim = mat("#e0a32e", { metalness: 0.6, roughness: 0.3, flatShading: false });
-    const face = new THREE.MeshStandardMaterial({ map: emojiTexture(emoji), roughness: 0.4, metalness: 0.1, emissive: 0xffffff, emissiveIntensity: 0.15 });
+    const face = new THREE.MeshStandardMaterial({ map: coinTexture(id), roughness: 0.4, metalness: 0.1, emissive: 0xffffff, emissiveIntensity: 0.15 });
     face.emissiveMap = face.map;
     const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.09, 32), [rim, face, face]);
     coin.geometry.rotateX(Math.PI / 2);

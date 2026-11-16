@@ -6,6 +6,8 @@
    fallback).
    ===================================================== */
 
+import { icon } from "./icons.js";
+
 const EMAIL = "bwalls06@outlook.com";
 const SECTION_NAMES = {
   about: "About", experience: "Experience", projects: "Projects", skills: "Skills",
@@ -16,7 +18,7 @@ const SUGGESTIONS = [
   "Tell me about MalwareScope",
   "What did he do at the airport?",
   "When does he graduate?",
-  "Does he have leadership experience?",
+  "What is the OpenAI Student Collective?",
   "How do I contact him?",
 ];
 
@@ -55,7 +57,7 @@ const SYNONYMS = {
 /* words that point at a section even when the bullet text doesn't repeat them */
 const SECTION_HINTS = {
   education: /\b(graduat\w*|grad|gpa|grades|degree|major|minor|school|college|universit\w*|stud\w*|cert\w*|course\w*)\b/i,
-  leadership: /\b(lead\w*|president|club\w*|manag\w*|team\w*|organi[sz]\w*|initiative)\b/i,
+  leadership: /\b(lead\w*|president|club\w*|manag\w*|team\w*|organi[sz]\w*|initiative|openai|collective|campus)\b/i,
   experience: /\b(work\w*|job\w*|intern\w*|employ\w*|role\w*|siem|soc|airport|byteshield|uits|professional|experience)\b/i,
   skills: /\b(skill\w*|tools?|know|knows|familiar|proficien\w*|programming|coding|stack|technolog\w*)\b/i,
   projects: /\b(project\w*|built|build|portfolio|github|malwarescope|lab|scanner)\b/i,
@@ -112,7 +114,8 @@ function localAnswer(q) {
       text: "Quick version: Benian is a Cybersecurity & Global Policy student at Indiana University (May 2028, 3.63 GPA). " +
         "He was a **Cybersecurity Intern at the Indianapolis Airport Authority** (vulnerability management, SIEM monitoring, threat investigation), " +
         "runs **Nessus scans and GoPhish phishing tests at ByteShield Solutions** (35+ high-risk findings per project, 45% fewer risky clicks), " +
-        "built **MalwareScope**, an ML malware detector, and leads the **400+ member Ingineering Club** as president.",
+        "built **MalwareScope**, an ML malware detector, is a **Campus Lead for OpenAI's Student Collective** (1 of 120 worldwide), " +
+        "and leads the **400+ member Ingineering Club** as president.",
       section: "experience",
     };
   }
@@ -181,22 +184,23 @@ export function initCoach({ openPopup }) {
   const root = document.createElement("div");
   root.id = "coach";
   root.innerHTML = `
-    <button class="coach-fab mono" aria-expanded="false" aria-controls="coach-panel">
-      <span class="coach-dot" aria-hidden="true"></span><span class="coach-fab-long">recruiter? ask me anything</span><span class="coach-fab-short">ask me</span>
+    <button class="coach-fab" aria-expanded="false" aria-controls="coach-panel">
+      ${icon("message")}<span class="coach-fab-long">Ask about Benian</span><span class="coach-fab-short">Ask</span>
     </button>
     <section class="coach-panel" id="coach-panel" role="dialog" aria-label="Ask about Benian" hidden>
       <header class="coach-head">
-        <div>
+        <img class="coach-avatar" src="assets/headshot.jpg" alt="" width="40" height="40" />
+        <div class="coach-title">
           <strong>Ask about Benian</strong>
-          <p class="mono">${endpoint ? "AI coach · answers from his resume" : "instant answers from his resume"}</p>
+          <p>${endpoint ? "AI assistant. Answers come from his resume." : "Answers come straight from his resume."}</p>
         </div>
-        <button class="coach-close" aria-label="Close">✕</button>
+        <button class="coach-close" aria-label="Close">${icon("close")}</button>
       </header>
       <div class="coach-log" aria-live="polite"></div>
       <div class="coach-chips"></div>
       <form class="coach-form">
         <input class="coach-input" type="text" maxlength="400" placeholder="e.g. Has he used a SIEM?" aria-label="Your question" autocomplete="off" />
-        <button class="coach-send" type="submit" aria-label="Send">↑</button>
+        <button class="coach-send" type="submit" aria-label="Send">${icon("up")}</button>
       </form>
     </section>`;
   document.body.appendChild(root);
@@ -214,7 +218,7 @@ export function initCoach({ openPopup }) {
     root.classList.toggle("open", open);
     if (open) {
       if (!log.childElementCount) {
-        addMsg("bot", { text: "Hi! I'm Benian's resume coach. Ask me anything a recruiter might want to know: experience, tools, projects, education, or how to reach him." });
+        addMsg("bot", { text: "Hi. Ask me anything about Benian's experience, tools, projects, education, or how to reach him." });
       }
       setTimeout(() => input.focus(), 50);
     }
@@ -228,7 +232,7 @@ export function initCoach({ openPopup }) {
   for (const s of SUGGESTIONS) {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "coach-chip mono";
+    b.className = "coach-chip";
     b.textContent = s;
     b.addEventListener("click", () => ask(s));
     chips.appendChild(b);
@@ -251,8 +255,8 @@ export function initCoach({ openPopup }) {
     if (!SECTION_NAMES[section]) return;
     const a = document.createElement("button");
     a.type = "button";
-    a.className = "coach-link mono";
-    a.textContent = `open ${SECTION_NAMES[section]} →`;
+    a.className = "coach-link";
+    a.innerHTML = `Open ${SECTION_NAMES[section]}${icon("arrow")}`;
     a.addEventListener("click", () => openPopup(section));
     m.appendChild(a);
   }

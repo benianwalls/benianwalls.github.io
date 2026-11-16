@@ -21,12 +21,26 @@
 <meta name="twitter:title" content="Benian Walls | Cybersecurity & Global Policy" />
 <meta name="twitter:description" content="An interactive 3D resume: scroll to ride through the mountains." />
 <meta name="twitter:image" content="https://benianwalls.com/assets/og.png" />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚵</text></svg>" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%2314231a'/><text x='32' y='43' text-anchor='middle' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='30' fill='%23ff7a3d'>BW</text></svg>" />
 <link rel="modulepreload" href="vendor/three/three.module.min.js" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,75..125,400..900;1,75..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Benian Walls",
+  "url": "https://benianwalls.com/",
+  "image": "https://benianwalls.com/assets/headshot.jpg",
+  "email": "mailto:bwalls06@outlook.com",
+  "jobTitle": "Cybersecurity student",
+  "alumniOf": { "@type": "CollegeOrUniversity", "name": "Indiana University Bloomington" },
+  "knowsAbout": ["Cybersecurity", "Vulnerability management", "SIEM", "Python", "AI security"],
+  "sameAs": ["https://www.linkedin.com/in/benianwalls/", "https://github.com/benianwalls"]
+}
+</script>
 <!-- Cloudflare Web Analytics -->
 <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "f5797ab2a5e347eb9656a8737cb7e74e"}'></script>
 <!-- End Cloudflare Web Analytics -->
@@ -40,27 +54,30 @@
 </div>
 <div id="loader" aria-hidden="true">
   <div class="loader-wheel"></div>
-  <p class="mono">building the trail…</p>
+  <p class="mono">Loading the trail</p>
 </div>
 
 <!-- progress bar -->
 <div id="trail-progress"><div id="trail-progress-fill"></div></div>
 
 <!-- floating section dock -->
-<nav id="topnav" class="mono" aria-label="Sections">
+<nav id="topnav" aria-label="Sections">
   <span id="nav-slider" aria-hidden="true"></span>
-  <a href="#start" data-target="start">home</a>
-  <a href="#about" data-target="about">about</a>
-  <a href="#experience" data-target="experience">experience</a>
-  <a href="#projects" data-target="projects">projects</a>
-  <a href="#skills" data-target="skills">skills</a>
-  <a href="#education" data-target="education">education</a>
-  <a href="#leadership" data-target="leadership">leadership</a>
-  <a href="#contact" data-target="contact">contact</a>
+  <a href="#start" data-target="start">Home</a>
+  <a href="#about" data-target="about">About</a>
+  <a href="#experience" data-target="experience">Experience</a>
+  <a href="#projects" data-target="projects">Projects</a>
+  <a href="#skills" data-target="skills">Skills</a>
+  <a href="#education" data-target="education">Education</a>
+  <a href="#leadership" data-target="leadership">Leadership</a>
+  <a href="#contact" data-target="contact">Contact</a>
 </nav>
 
 <!-- badge counter -->
-<div id="hud" class="mono" title="Glowing badges are hidden along the trail, click them!">🏅 <span id="badge-count">0</span>/<span id="badge-total">7</span></div>
+<div id="hud" class="mono" title="Seven coins are hidden along the trail. Click them to collect.">
+  <svg class="ico" aria-hidden="true"><use href="#i-coin"/></svg>
+  <span><span id="badge-count">0</span>/<span id="badge-total">7</span></span>
+</div>
 
 <!-- hacker mode toggle (appears once all badges are collected) -->
 <button id="hack-toggle" class="mono" hidden>ENTER HACKER MODE</button>
@@ -68,8 +85,8 @@
 
 <!-- all-badges-collected toast -->
 <div id="toast">
-  <strong>🏆 TRAIL MASTER</strong>
-  <p class="mono">All 7 badges collected. HACKER MODE unlocked.</p>
+  <strong>Trail master</strong>
+  <p class="mono">All 7 coins collected. Hacker mode unlocked.</p>
 </div>
 
 <!-- ===== SCROLLING CONTENT ===== -->
@@ -77,21 +94,25 @@
 
   <section class="panel hero" id="start">
     <div class="hero-inner">
-      <p class="mono kicker" id="kicker"><span id="term-text"></span><span class="term-cursor" aria-hidden="true"></span></p>
-      <h1>BENIAN<br/>WALLS</h1>
-      <p class="subtitle">Cybersecurity &amp; Global Policy @ Indiana University</p>
-      <p class="tagline">Securing systems. Shredding trails.</p>
+      <p class="eyebrow">
+        <img class="eyebrow-photo" src="assets/headshot.jpg" alt="" width="44" height="44" />
+        <span class="mono">Interactive resume</span>
+      </p>
+      <h1>Benian<br/>Walls</h1>
+      <p class="subtitle">Cybersecurity &amp; Global Policy at Indiana University</p>
+      <ul class="proof">
+        <li><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg>Cybersecurity Intern, Indianapolis Airport Authority</li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-spark"/></svg>Campus Lead, OpenAI Student Collective</li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-users"/></svg>President, Ingineering Club (400+ members)</li>
+      </ul>
       <div class="hero-actions">
-        <a class="btn-resume mono" href="assets/BenianWalls-Resume.pdf" download>⬇ download resume</a>
-        <button class="btn-tour mono" id="tour-btn">▶ take the tour</button>
-        <button class="btn-quick mono" id="quick-btn">⚡ 30-second version</button>
+        <button class="btn btn-primary" id="tour-btn"><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span>Take the tour</span></button>
+        <button class="btn btn-light" id="quick-btn"><svg class="ico" aria-hidden="true"><use href="#i-zap"/></svg><span>30-second version</span></button>
+        <a class="btn btn-dark" href="assets/BenianWalls-Resume.pdf" download><svg class="ico" aria-hidden="true"><use href="#i-download"/></svg><span>Resume PDF</span></a>
       </div>
       <div class="scroll-hint">
-        <span class="mono">An interactive resume: scroll to ride | click the buildings to explore</span>
-        <span class="mono hint2">The rider, trees &amp; glowing coins are clickable too</span>
+        <span>Scroll to ride the trail. Each building is a section of my resume.</span>
         <button class="scroll-cta" id="scroll-cta" aria-label="Start the ride">
-          <span class="cta-pill mono">swipe to ride <span class="pill-arrow">→</span></span>
-          <span class="chev"></span>
           <span class="chev"></span>
           <span class="chev"></span>
         </button>
@@ -115,58 +136,62 @@
 
   <div class="popup" id="popup-quick" role="dialog" aria-modal="true" aria-label="Resume at a glance">
     <div class="card popup-panel quick-card">
-      <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">// THE 30-SECOND VERSION</p>
-      <h2>Benian Walls</h2>
-      <p class="quick-lede">Cybersecurity &amp; Global Policy @ Indiana University · May 2028 · 3.63 GPA · Bloomington, IN</p>
+      <button class="popup-close" aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      <div class="quick-head">
+        <img class="portrait" src="assets/headshot.jpg" alt="Benian Walls" />
+        <div>
+          <p class="kicker">The 30-second version</p>
+          <h2>Benian Walls</h2>
+          <p class="quick-lede">Cybersecurity &amp; Global Policy, Indiana University · May 2028 · 3.63 GPA</p>
+        </div>
+      </div>
       <ul class="quick-list">
-        <li><strong>Cybersecurity Intern, Indianapolis Airport Authority</strong> <span class="mono when">2026</span><br/>Vulnerability management, SIEM monitoring, threat investigation, risk &amp; compliance.</li>
-        <li><strong>Security Solutions Specialist, ByteShield Solutions</strong> <span class="mono when">2025-now</span><br/>Nessus scans (35+ high-risk findings/project, 95% remediated), firewall reviews (-40% unauthorized access), GoPhish campaigns (-45% risky clicks).</li>
-        <li><strong>Student IT Support, IU UITS</strong> <span class="mono when">2026-now</span><br/>Account, device, Wi-Fi, and software support for students, faculty, and staff.</li>
-        <li><strong>Built:</strong> MalwareScope (ML malware detector, 79% detection at 0.1% FPR), an LLM Agent Security Lab, and a port scanner.</li>
-        <li><strong>Leads:</strong> President of the Ingineering Club (board of 7, 400+ members).</li>
-        <li><strong>Certs:</strong> Google Cybersecurity Certificate, IU GenAI 101.</li>
+        <li><strong>Cybersecurity Intern, Indianapolis Airport Authority</strong> <span class="mono when">2026</span><br/>Vulnerability management, SIEM monitoring, threat investigation, risk and compliance.</li>
+        <li><strong>Security Solutions Specialist (Contract), ByteShield Solutions</strong> <span class="mono when">2025 to present</span><br/>Nessus scans and network reviews (35+ high-risk findings per project, 95% remediated); GoPhish campaigns that cut risky clicks 45%.</li>
+        <li><strong>Student IT Support, IU UITS</strong> <span class="mono when">2026 to present</span><br/>Account, device, Wi-Fi, and software support for students, faculty, and staff.</li>
+        <li><strong>Projects</strong><br/>MalwareScope (ML malware detector, 79% detection at a 0.1% false-positive rate) and an LLM Agent Security Lab.</li>
+        <li><strong>Leadership</strong><br/>Campus Lead, OpenAI Student Collective (1 of 120 worldwide). President, Ingineering Club (board of 7, 400+ members).</li>
+        <li><strong>Certificates</strong><br/>Google Cybersecurity Certificate, IU GenAI 101.</li>
       </ul>
       <div class="chips quick-chips">
         <span>Nessus</span><span>Nmap</span><span>Wireshark</span><span>GoPhish</span><span>Tanium</span><span>Arctic Wolf</span><span>Python</span><span>SQL</span><span>Linux</span><span>NIST</span>
       </div>
       <div class="contact-links">
-        <a href="mailto:bwalls06@outlook.com" class="contact-btn">📧 Email</a>
-        <a href="https://www.linkedin.com/in/benianwalls/" target="_blank" rel="noopener" class="contact-btn">💼 LinkedIn</a>
-        <a href="assets/BenianWalls-Resume.pdf" download class="contact-btn">📄 Resume PDF</a>
+        <a href="mailto:bwalls06@outlook.com" class="contact-btn"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg>Email</a>
+        <a href="https://www.linkedin.com/in/benianwalls/" target="_blank" rel="noopener" class="contact-btn"><svg class="ico" aria-hidden="true"><use href="#i-linkedin"/></svg>LinkedIn</a>
+        <a href="assets/BenianWalls-Resume.pdf" download class="contact-btn"><svg class="ico" aria-hidden="true"><use href="#i-file"/></svg>Resume PDF</a>
       </div>
-      <p class="mono footer-note">Want details? Ride the trail, or ask the coach in the corner.</p>
     </div>
   </div>
 
   <div class="popup" id="popup-about" role="dialog" aria-modal="true" aria-label="About Me">
     <div class="card popup-panel">
-      <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">MILE 01 · WHO'S RIDING</p>
-      <h2>About Me</h2>
+      <button class="popup-close" aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      <p class="kicker">Mile 01</p>
+      <h2>About</h2>
       <div class="about-flex">
         <img class="portrait" src="assets/headshot.jpg" alt="Benian Walls" loading="lazy" onerror="this.style.display='none'" />
         <p>I’m a cybersecurity student at Indiana University’s Luddy School of Informatics, Computing, and Engineering, graduating in May 2028. I enjoy learning both the technical and broader sides of security, from working with vulnerability management, phishing simulations, and SIEM tools to understanding how cybersecurity impacts organizations and the world around us.</p>
       </div>
       <ul class="fact-list">
-        <li><span class="mono">📍</span> Bloomington, IN</li>
-        <li><span class="mono">🗣</span> Fluent in English &amp; Turkish</li>
-        <li><span class="mono">🏅</span> Hudson &amp; Holland Scholar: merit program for academic excellence &amp; leadership</li>
-        <li><span class="mono">🎓</span> Provost Scholarship recipient</li>
-        <li><span class="mono">⏰</span> Off the clock: fishing, traveling, and finding new trails</li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-pin"/></svg>Bloomington, IN</li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-globe"/></svg>Fluent in English and Turkish</li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-award"/></svg>Hudson &amp; Holland Scholar: merit-based program for academic excellence and leadership</li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-cap"/></svg>Provost Scholarship recipient</li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>Off the clock: fishing, traveling, and finding new trails</li>
       </ul>
       <div class="photo-strip">
-        <figure class="polaroid tilt-l">
-          <img src="assets/fishing.jpg" alt="Benian holding a freshly caught bass on a lake boardwalk" loading="lazy" onerror="this.closest('.polaroid').style.display='none'" />
-          <figcaption class="mono">caught one 🎣</figcaption>
+        <figure class="photo">
+          <img src="assets/fishing.jpg" alt="Benian holding a freshly caught bass on a lake boardwalk" loading="lazy" onerror="this.closest('.photo').style.display='none'" />
+          <figcaption class="mono">On the water</figcaption>
         </figure>
-        <figure class="polaroid tilt-r">
-          <img src="assets/travel.jpg" alt="Benian in San Francisco with the Bay Bridge behind him" loading="lazy" onerror="this.closest('.polaroid').style.display='none'" />
-          <figcaption class="mono">san francisco 🌉</figcaption>
+        <figure class="photo">
+          <img src="assets/travel.jpg" alt="Benian in San Francisco with the Bay Bridge behind him" loading="lazy" onerror="this.closest('.photo').style.display='none'" />
+          <figcaption class="mono">San Francisco</figcaption>
         </figure>
-        <figure class="polaroid tilt-l">
-          <img src="assets/bike.jpg" alt="Benian and a riding buddy holding their bikes in front of a covered bridge" loading="lazy" onerror="this.closest('.polaroid').style.display='none'" />
-          <figcaption class="mono">actual trails 🚵</figcaption>
+        <figure class="photo">
+          <img src="assets/bike.jpg" alt="Benian and a riding buddy holding their bikes in front of a covered bridge" loading="lazy" onerror="this.closest('.photo').style.display='none'" />
+          <figcaption class="mono">Actual trails</figcaption>
         </figure>
       </div>
     </div>
@@ -174,8 +199,8 @@
 
   <div class="popup" id="popup-experience" role="dialog" aria-modal="true" aria-label="Experience">
     <div class="card popup-panel">
-      <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">MILE 02 · THE CLIMB</p>
+      <button class="popup-close" aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      <p class="kicker">Mile 02</p>
       <h2>Experience</h2>
 
       <div class="job club-job">
@@ -183,7 +208,7 @@
         <div class="club-body">
         <div class="job-head">
           <h3>Cybersecurity Intern</h3>
-          <span class="mono when">May - Aug 2026</span>
+          <span class="mono when">May 2026 - Aug 2026</span>
         </div>
         <p class="org">Indianapolis Airport Authority · Indianapolis, IN</p>
         <ul>
@@ -202,8 +227,8 @@
         </div>
         <p class="org">Indiana University UITS · Bloomington, IN</p>
         <ul>
-          <li>Providing technical support for students, faculty, and staff across account, device, Wi-Fi, and software issues</li>
-          <li>Documenting tickets, troubleshooting issues, and solving problems while following IU service procedures</li>
+          <li>Provide technical support for students, faculty, and staff across account, device, Wi-Fi, and software issues</li>
+          <li>Document tickets, troubleshoot issues, and solve problems while following IU service procedures</li>
         </ul>
         </div>
       </div>
@@ -212,14 +237,13 @@
         <img class="club-logo" src="assets/byteshield_sol.jpeg" alt="ByteShield Solutions logo" loading="lazy" onerror="this.style.display='none'" />
         <div class="club-body">
         <div class="job-head">
-          <h3>Contracted Security Solutions Specialist</h3>
+          <h3>Security Solutions Specialist (Contract)</h3>
           <span class="mono when">Aug 2025 - Present</span>
         </div>
         <p class="org">ByteShield Solutions · Bloomington, IN</p>
         <ul>
-          <li>Conducting Nessus scans to find security weaknesses, reporting 35+ high-risk issues per project with 95% remediation</li>
-          <li>Reviewing firewalls, devices, and network rules, reducing unauthorized access attempts by 40%</li>
-          <li>Creating phishing tests using GoPhish, helping reduce risky clicks by 45%</li>
+          <li>Identify 35+ high-risk issues per project through Nessus scans and network reviews, achieving 95% remediation</li>
+          <li>Design phishing tests using GoPhish, helping reduce risky clicks by 45% and strengthening employee security awareness</li>
         </ul>
         </div>
       </div>
@@ -228,51 +252,54 @@
 
   <div class="popup" id="popup-projects" role="dialog" aria-modal="true" aria-label="Projects">
     <div class="card popup-panel">
-      <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">MILE 03 · BUILDS</p>
+      <button class="popup-close" aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      <p class="kicker">Mile 03</p>
       <h2>Projects</h2>
 
       <div class="project">
-        <h3>MalwareScope <span class="mono tech">Python · PyTorch · scikit-learn · FastAPI · SHAP</span></h3>
+        <h3>MalwareScope</h3>
+        <p class="mono tech">Python · PyTorch · scikit-learn · FastAPI · SHAP</p>
         <p>ML-powered static malware detector for Windows PE files, training Random Forest and PyTorch neural-network models on the EMBER2018/2024 benchmarks; the best model detects 79% of malware at a deployable 0.1% false-positive rate. Added SHAP explainability, a calibrated UNCERTAIN band, and a VirusTotal cross-check, served through a FastAPI web dashboard, CLI, and a Chrome extension that scans downloads in real time.</p>
-        <a class="repo-link mono" href="https://github.com/benianwalls/malwarescope" target="_blank" rel="noopener">view code on github ↗</a>
+        <a class="repo-link" href="https://github.com/benianwalls/malwarescope" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-github"/></svg>View code on GitHub</a>
       </div>
 
       <div class="project">
-        <h3>LLM Agent Security Lab <span class="mono tech">Python · Git</span></h3>
-        <p>Built a vulnerable-and-defended LLM-agent environment to evaluate indirect prompt injection, mock data exfiltration, system prompt leakage, and unsafe tool execution in a controlled sandbox. Implemented guardrails outside the model: least-privilege tool access, output encoding, and recipient restrictions.</p>
-        <a class="repo-link mono" href="https://github.com/benianwalls/llm-agent-security-lab" target="_blank" rel="noopener">view code on github ↗</a>
+        <h3>LLM Agent Security Lab</h3>
+        <p class="mono tech">Python · Git · GitHub</p>
+        <p>A vulnerable-and-defended LLM-agent environment to evaluate indirect prompt injection, mock data exfiltration, system prompt leakage, and unsafe tool execution in a controlled sandbox. Implemented model-independent guardrails, including least-privilege tool access, output encoding, and recipient restrictions.</p>
+        <a class="repo-link" href="https://github.com/benianwalls/llm-agent-security-lab" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-github"/></svg>View code on GitHub</a>
       </div>
 
       <div class="project">
-        <h3>Python Port Scanner <span class="mono tech">Python</span></h3>
+        <h3>Python Port Scanner</h3>
+        <p class="mono tech">Python</p>
         <p>A Python tool that scans target IPs, identifies open ports, and assesses potential attack surfaces on target systems.</p>
-        <a class="repo-link mono" href="https://github.com/benianwalls/Port_Scanner" target="_blank" rel="noopener">view code on github ↗</a>
+        <a class="repo-link" href="https://github.com/benianwalls/Port_Scanner" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-github"/></svg>View code on GitHub</a>
       </div>
     </div>
   </div>
 
   <div class="popup" id="popup-skills" role="dialog" aria-modal="true" aria-label="Skills">
     <div class="card popup-panel">
-      <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">MILE 04 · GEAR CHECK</p>
+      <button class="popup-close" aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      <p class="kicker">Mile 04</p>
       <h2>Skills</h2>
       <div class="skill-group">
-        <h4 class="mono">SECURITY &amp; NETWORKING</h4>
+        <h4 class="mono">Security &amp; networking</h4>
         <div class="chips">
           <span>Nessus</span><span>Nmap</span><span>GoPhish</span><span>Arctic Wolf</span><span>Tanium</span><span>Wireshark</span><span>OWASP Top 10</span><span>NIST</span><span>CIS Controls</span>
         </div>
       </div>
       <div class="skill-group">
-        <h4 class="mono">PROGRAMMING &amp; SCRIPTING</h4>
+        <h4 class="mono">Programming &amp; scripting</h4>
         <div class="chips">
           <span>Python</span><span>SQL</span><span>Java</span><span>JavaScript</span><span>HTML</span><span>CSS</span>
         </div>
       </div>
       <div class="skill-group">
-        <h4 class="mono">SYSTEMS &amp; TOOLS</h4>
+        <h4 class="mono">Systems &amp; tools</h4>
         <div class="chips">
-          <span>Linux</span><span>Kali Linux</span><span>Git / GitHub</span><span>Windows</span><span>macOS</span><span>Terminal</span>
+          <span>Linux</span><span>Kali Linux</span><span>Git / GitHub</span><span>Windows</span><span>macOS</span><span>Terminal</span><span>Microsoft Office</span><span>Google Workspace</span>
         </div>
       </div>
     </div>
@@ -280,9 +307,9 @@
 
   <div class="popup" id="popup-education" role="dialog" aria-modal="true" aria-label="Education and Certificates">
     <div class="card popup-panel">
-      <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">MILE 05 · SUMMIT ROUTE</p>
-      <h2>Education &amp; Certs</h2>
+      <button class="popup-close" aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      <p class="kicker">Mile 05</p>
+      <h2>Education &amp; Certificates</h2>
       <div class="job club-job">
         <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" loading="lazy" onerror="this.style.display='none'" />
         <div class="club-body">
@@ -290,9 +317,11 @@
           <h3>B.S. Cybersecurity &amp; Global Policy</h3>
           <span class="mono when">May 2028</span>
         </div>
-        <p class="org">Indiana University | Luddy School of Informatics, Computing, and Engineering</p>
+        <p class="org">Indiana University · Luddy School of Informatics, Computing, and Engineering</p>
         <ul>
-          <li>Minor: Central Eurasian Studies with Language</li>
+          <li>GPA: 3.63 / 4.0</li>
+          <li>Minor: Central Eurasian Studies with a Language</li>
+          <li>Hudson &amp; Holland Scholar, Provost Scholarship</li>
         </ul>
         </div>
       </div>
@@ -305,7 +334,20 @@
         </div>
         <p class="org">Coursera</p>
         <ul>
-          <li>Network security, risk management, threat analysis, incident response; hands-on with Linux, Wireshark, and SQL</li>
+          <li>Foundational training in network security, risk management, threat analysis, and incident response, with hands-on work</li>
+        </ul>
+        </div>
+      </div>
+      <div class="job club-job">
+        <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" loading="lazy" onerror="this.style.display='none'" />
+        <div class="club-body">
+        <div class="job-head">
+          <h3>GenAI 101 Certificate</h3>
+          <span class="mono when">Jun 2026</span>
+        </div>
+        <p class="org">Indiana University</p>
+        <ul>
+          <li>Generative AI concepts, prompt engineering, and responsible AI practices</li>
         </ul>
         </div>
       </div>
@@ -314,9 +356,23 @@
 
   <div class="popup" id="popup-leadership" role="dialog" aria-modal="true" aria-label="Leadership">
     <div class="card popup-panel">
-      <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">MILE 06 · RIDING WITH THE PACK</p>
-      <h2>Leadership</h2>
+      <button class="popup-close" aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      <p class="kicker">Mile 06</p>
+      <h2>Leadership &amp; Involvement</h2>
+      <div class="job club-job">
+        <div class="club-logo logo-tile" aria-hidden="true"><svg class="ico"><use href="#i-spark"/></svg></div>
+        <div class="club-body">
+        <div class="job-head">
+          <h3>Campus Lead, OpenAI Student Collective</h3>
+          <span class="mono when">Aug 2026 - Present</span>
+        </div>
+        <p class="org">Indiana University · Bloomington, IN</p>
+        <ul>
+          <li>Selected as 1 of 120 undergraduate Campus Leads worldwide for OpenAI’s Student Collective, a global program advancing practical and responsible AI education on university campuses</li>
+          <li>Co-lead Indiana University’s workshops, Studio Hours, and showcases where students build with ChatGPT and Codex</li>
+        </ul>
+        </div>
+      </div>
       <div class="job club-job">
         <img class="club-logo" src="assets/ingineering.jpg" alt="INgineering at IU club logo" loading="lazy" onerror="this.style.display='none'" />
         <div class="club-body">
@@ -324,23 +380,10 @@
           <h3>President, Ingineering Club</h3>
           <span class="mono when">Apr 2026 - Present</span>
         </div>
-        <p class="org">Indiana University</p>
+        <p class="org">Indiana University · Bloomington, IN</p>
         <ul>
-          <li>Recruited and manage an executive board of 7 and a community of 400+ members</li>
-          <li>Run day-to-day operations: events, meetings, and project coordination</li>
-        </ul>
-        </div>
-      </div>
-      <div class="job club-job">
-        <img class="club-logo" src="assets/cyberclub.jpeg" alt="IU Cybersecurity Club logo" loading="lazy" onerror="this.style.display='none'" />
-        <div class="club-body">
-        <div class="job-head">
-          <h3>Member, Cybersecurity Club</h3>
-          <span class="mono when">Sep 2024 - Present</span>
-        </div>
-        <p class="org">Indiana University</p>
-        <ul>
-          <li>Hands-on ethical hacking, threat analysis, and network defense; workshops on cloud security and malware analysis</li>
+          <li>Recruit and manage an executive board of 7 members and 400+ total members</li>
+          <li>Lead the day-to-day operations of the club: plan events, run meetings, and keep projects organized</li>
         </ul>
         </div>
       </div>
@@ -349,18 +392,18 @@
 
   <div class="popup" id="popup-contact" role="dialog" aria-modal="true" aria-label="Contact">
     <div class="card popup-panel contact-card">
-      <button class="popup-close" aria-label="Close">✕</button>
-      <p class="mono kicker">// END OF TRAIL</p>
-      <h2>Let's Connect</h2>
+      <button class="popup-close" aria-label="Close"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      <p class="kicker">End of trail</p>
+      <h2>Let's connect</h2>
       <p>Open to internships, security projects, and a good ride.</p>
       <div class="contact-links">
-        <a href="mailto:bwalls06@outlook.com" class="contact-btn">📧 bwalls06@outlook.com</a>
-        <a href="https://www.linkedin.com/in/benianwalls/" target="_blank" rel="noopener" class="contact-btn">💼 LinkedIn</a>
-        <a href="https://github.com/benianwalls" target="_blank" rel="noopener" class="contact-btn">🐙 GitHub</a>
-        <a href="assets/BenianWalls-Resume.pdf" download class="contact-btn">📄 Download Resume</a>
+        <a href="mailto:bwalls06@outlook.com" class="contact-btn"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg>bwalls06@outlook.com</a>
+        <a href="https://www.linkedin.com/in/benianwalls/" target="_blank" rel="noopener" class="contact-btn"><svg class="ico" aria-hidden="true"><use href="#i-linkedin"/></svg>LinkedIn</a>
+        <a href="https://github.com/benianwalls" target="_blank" rel="noopener" class="contact-btn"><svg class="ico" aria-hidden="true"><use href="#i-github"/></svg>GitHub</a>
+        <a href="assets/BenianWalls-Resume.pdf" download class="contact-btn"><svg class="ico" aria-hidden="true"><use href="#i-file"/></svg>Download resume</a>
       </div>
-      <button class="back-to-start mono" id="back-to-start">⟲ ride back to the trailhead</button>
-      <p class="mono footer-note">© 2026 Benian Walls · built with way too much time · <a href="classic/">classic 2D version</a></p>
+      <button class="back-to-start" id="back-to-start"><svg class="ico" aria-hidden="true"><use href="#i-restart"/></svg>Ride back to the trailhead</button>
+      <p class="footer-note">© 2026 Benian Walls · <a href="classic/">Classic 2D version</a></p>
     </div>
   </div>
 
