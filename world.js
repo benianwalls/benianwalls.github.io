@@ -86,6 +86,13 @@ const LAKE = (() => {
   return { x, z: trailZ(x) - 27, r: 11, y: trailY(x) - 0.35 };
 })();
 
+/* open, level ground for the runway beside the Experience stop */
+const AIRFIELD = (() => {
+  const p = PADS[1];
+  const local = { x0: 6, x1: 44, z: -6 }; // runway, in the landmark's own space
+  return { local, y: p.y, x0: p.x + 3, x1: p.x + 47, z0: p.z + local.z - 4.5, z1: p.z + 4.5 };
+})();
+
 function terrainHeight(x, z) {
   const d = Math.abs(z - trailZ(x));
   const base = trailY(x);
@@ -100,6 +107,8 @@ function terrainHeight(x, z) {
     const dd = Math.hypot(x - p.x, z - p.z);
     if (dd < p.r + 8) h = lerp(p.y, h, smooth(p.r, p.r + 8, dd));
   }
+  const ax = Math.max(AIRFIELD.x0 - x, 0, x - AIRFIELD.x1), az = Math.max(AIRFIELD.z0 - z, 0, z - AIRFIELD.z1);
+  if (ax < 4 && az < 4) h = lerp(AIRFIELD.y, h, smooth(0, 4, Math.hypot(ax, az)));
   const ld = Math.hypot(x - LAKE.x, z - LAKE.z);
   if (ld < LAKE.r * 2.6) h = lerp(LAKE.y + 0.5, h, smooth(LAKE.r * 1.1, LAKE.r * 2.6, ld)); // a gentle basin
   if (ld < LAKE.r * 1.6) {
@@ -512,6 +521,7 @@ export async function createWorld({ canvas, quality }) {
       for (const p of PADS) if (Math.hypot(x - p.x, z - p.z) < p.r + rad) return false;
       if (Math.abs(x - (TRAIL_LEN + 11)) < 7 && Math.abs(z - trailZ(x)) < 5) return false; // finish arch
       if (x > -14 && x < 2 && Math.abs(z - trailZ(x)) < 7) return false; // trailhead
+      if (x > AIRFIELD.x0 - 2 && x < AIRFIELD.x1 + 2 && z > AIRFIELD.z0 - 3 && z < trailZ(x) - 1.2) return false; // airfield stays open
       cell.set(k, 1);
       return true;
     };
@@ -630,20 +640,31 @@ export async function createWorld({ canvas, quality }) {
     return m;
   }
 
-  function lamp(parent, x, z) {
+  function lamp(parent, x, z, bulb = bulbMat) {
     tube(parent, 0.07, "#2d3436", new THREE.Vector3(x, 0, z), new THREE.Vector3(x, 3.2, z), 6);
     box(parent, 0.5, 0.12, 0.5, "#2d3436", x, 3.2, z);
-    const b = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 8), bulbMat);
+    const b = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 8), bulb);
     b.position.set(x, 3.08, z);
     parent.add(b);
   }
 
-  function windowAt(parent, w, h, x, y, z, frame = "#3d3328") {
+  function windowAt(parent, w, h, x, y, z, frame = "#3d3328", glass = windowMat) {
     box(parent, w + 0.18, h + 0.18, 0.08, frame, x, y - 0.09, z);
-    box(parent, w, h, 0.1, windowMat, x, y, z + 0.02);
+    box(parent, w, h, 0.1, glass, x, y, z + 0.02);
   }
 
-  function smokePuffs(parent, x, y, z) {
+  /* =====================================================
+     ARRIVAL MOMENTS — each building comes alive for a few
+     seconds when the rider arrives or its card opens.
+     `live()` is 0..1: how awake a landmark is right now.
+     ===================================================== */
+
+  const envelope = (x, attack, hold, release) =>
+    x < 0 ? 0 : x < attack ? x / attack : x < attack + hold ? 1 : 1 - smooth(0, release, x - attack - hold);
+  const live = (s, id, hold = 5) => Math.max(envelope(s.since(id), 0.3, hold, 1.5), s.openId === id ? 1 : 0);
+  const easeOut = (t) => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+
+  function smokePuffs(parent, x, y, z, id) {
     const puffs = [];
     const pm = new THREE.MeshStandardMaterial({ color: 0xdedede, transparent: true, opacity: 0.6, roughness: 1, flatShading: true, depthWrite: false });
     for (let i = 0; i < 5; i++) {
@@ -651,9 +672,11 @@ export async function createWorld({ canvas, quality }) {
       parent.add(p);
       puffs.push(p);
     }
-    onTick((t) => {
+    let phase = 0;
+    onTick((t, s) => {
+      phase += s.dt * (0.25 + live(s, id) * 0.5);
       puffs.forEach((p, i) => {
-        const k = ((t * 0.25 + i / puffs.length) % 1);
+        const k = ((phase + i / puffs.length) % 1);
         p.position.set(x + k * 1.6, y + k * 3.4, z - k * 0.4);
         p.scale.setScalar(0.6 + k * 1.8);
         p.material.opacity = 0.55 * (1 - k);
@@ -665,52 +688,36 @@ export async function createWorld({ canvas, quality }) {
      LANDMARKS — one low-poly building per resume section
      ===================================================== */
 
+  /* About: the porch light and windows come on (and the fish jumps, see buildLake) */
   function buildHouse(g) {
+    const glass = windowMat.clone(), porch = bulbMat.clone();
     box(g, 6.4, 3.6, 5, "#efe3c8", 0, 0, 0);
     prism(g, 7.4, 2.6, 5.8, "#a85638", 0, 3.6, 0);
     box(g, 0.7, 2.2, 0.7, "#7a5c3e", 1.8, 4.0, -0.9);
-    smokePuffs(g, 1.8, 6.4, -0.9);
+    smokePuffs(g, 1.8, 6.4, -0.9, "about");
     box(g, 1.1, 2.0, 0.12, "#7a5c3e", 0, 0, 2.52);
     const knob = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), mat("#ffd166", { metalness: 0.6, roughness: 0.3 }));
     knob.position.set(0.35, 1.0, 2.62);
     g.add(knob);
-    windowAt(g, 1.2, 1.1, -2.0, 1.4, 2.52);
-    windowAt(g, 1.2, 1.1, 2.0, 1.4, 2.52);
-    const attic = new THREE.Mesh(new THREE.CircleGeometry(0.42, 16), windowMat);
+    windowAt(g, 1.2, 1.1, -2.0, 1.4, 2.52, undefined, glass);
+    windowAt(g, 1.2, 1.1, 2.0, 1.4, 2.52, undefined, glass);
+    const attic = new THREE.Mesh(new THREE.CircleGeometry(0.42, 16), glass);
     attic.position.set(0, 4.5, 2.92);
     g.add(attic);
     box(g, 1.8, 0.2, 0.9, "#9c8a6a", 0, 0, 2.9);
-    lamp(g, 3.9, 2.8);
+    lamp(g, 3.9, 2.8, porch);
+    let k = 0;
+    onTick((t, s) => {
+      k = damp(k, live(s, "about"), 5, s.dt);
+      glass.emissiveIntensity = Math.max(s.glow, k * 2.2);
+      porch.emissiveIntensity = Math.max(0.2 + s.night * 5, k * 5);
+    });
     return 6.7;
   }
 
-  function buildOffice(g) {
-    box(g, 5.5, 10.4, 5, "#aebfc7", 0, 0, 0);
-    box(g, 5.8, 0.8, 5.3, "#3d4a52", 0, 10.4, 0);
-    box(g, 5.7, 0.35, 5.2, "#8fa1aa", 0, 4.05, 0);
-    for (let row = 0; row < 4; row++) {
-      for (let c = -1; c <= 1; c++) {
-        if (row === 0 && c === 0) continue;
-        windowAt(g, 1.0, 1.15, c * 1.65, 1.0 + row * 2.15, 2.5, "#3d4a52");
-      }
-    }
-    for (let row = 0; row < 4; row++) {
-      const w = box(g, 0.1, 1.15, 1.0, windowMat, 2.78, 1.0 + row * 2.15, 0.9);
-      w.castShadow = false;
-    }
-    box(g, 1.6, 2.2, 0.12, "#2e3b42", 0, 0, 2.52);
-    box(g, 2.4, 0.15, 1.1, "#ff7a3d", 0, 2.4, 2.9);
-    tube(g, 0.07, "#3d4a52", new THREE.Vector3(1.2, 11.2, 0), new THREE.Vector3(1.2, 14, 0), 6);
-    const beaconMat = new THREE.MeshStandardMaterial({ color: 0xff7a3d, emissive: 0xff5a1d, emissiveIntensity: 1 });
-    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 8), beaconMat);
-    beacon.position.set(1.2, 14.1, 0);
-    g.add(beacon);
-    onTick((t) => { beaconMat.emissiveIntensity = (Math.sin(t * 3) > 0.6 ? 4 : 0.3); });
-    lamp(g, -3.6, 2.6);
-
-    // a little plane circling the tower (airport authority, after all)
+  function buildPlane() {
     const plane = new THREE.Group();
-    const white = mat("#f4f6f8"), orange = mat("#ff7a3d");
+    const white = mat("#f4f6f8"), orange = mat("#ff7a3d"), dark = mat("#2d3436");
     const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 3.4, 4, 10), white);
     body.rotation.z = Math.PI / 2;
     plane.add(body);
@@ -727,33 +734,145 @@ export async function createWorld({ canvas, quality }) {
     stripe.rotation.z = Math.PI / 2;
     stripe.scale.set(1, 1, 0.3);
     plane.add(stripe);
+    for (const z of [-1.6, 1.6]) {
+      const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.8, 8), dark);
+      engine.rotation.z = Math.PI / 2;
+      engine.position.set(0.45, -0.35, z);
+      plane.add(engine);
+    }
+    for (const [x, z] of [[1.4, 0], [-0.2, -0.9], [-0.2, 0.9]]) {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.12, 8), dark);
+      wheel.rotation.x = Math.PI / 2;
+      wheel.position.set(x, -0.6, z);
+      plane.add(wheel);
+    }
     const navR = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 4), new THREE.MeshBasicMaterial({ color: 0xff3344 }));
     navR.position.set(0.2, -0.1, -3);
     const navG = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 4), new THREE.MeshBasicMaterial({ color: 0x33ff88 }));
     navG.position.set(0.2, -0.1, 3);
     plane.add(navR, navG);
     plane.traverse((o) => { o.castShadow = true; });
-    g.add(plane);
-    onTick((t) => {
-      const a = t * 0.16;
-      plane.position.set(Math.cos(a) * 34, 34 + Math.sin(t * 0.5) * 1.5, Math.sin(a) * 34 - 10);
-      plane.rotation.set(0.3, -a - Math.PI / 2, 0, "YXZ");
-    });
-    return 11.6;
+    return plane;
   }
 
+  /* Experience: a small airport (he interned at the Indianapolis Airport
+     Authority). The runway lights chase and the plane takes off. */
+  function buildAirport(g) {
+    const glass = windowMat.clone();
+    // terminal
+    box(g, 9, 3.2, 5, "#dfe6ea", -1, 0, 0);
+    box(g, 9.5, 0.3, 5.5, "#3d4a52", -1, 3.2, 0);
+    for (const x of [-4, -1, 2]) windowAt(g, 2.4, 1.5, x, 0.9, 2.5, "#3d4a52", glass);
+    box(g, 9.2, 0.14, 1.3, "#ff7a3d", -1, 2.65, 2.95);
+    const signMat = new THREE.MeshStandardMaterial({ map: textTexture("AIRPORT", { bg: "#14231a", fg: "#ffffff", size: 66 }), roughness: 0.6, emissive: 0xffffff, emissiveIntensity: 0 });
+    signMat.emissiveMap = signMat.map;
+    const dark = mat("#14231a");
+    const sign = shadowed(new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.9, 0.15), [dark, dark, dark, dark, signMat, dark]));
+    sign.position.set(-1, 4.0, 1.6);
+    g.add(sign);
+    lamp(g, 4.6, 2.8);
+
+    // control tower
+    const tx = -7.4, tz = -0.4;
+    const shaft = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.95, 8, 10), mat("#c9d3d9")));
+    shaft.position.set(tx, 4, tz);
+    g.add(shaft);
+    const cab = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(1.7, 1.25, 1.5, 10), glass));
+    cab.position.set(tx, 8.75, tz);
+    g.add(cab);
+    const cap = shadowed(new THREE.Mesh(new THREE.CylinderGeometry(1.85, 1.85, 0.25, 10), mat("#3d4a52")));
+    cap.position.set(tx, 9.62, tz);
+    g.add(cap);
+    tube(g, 0.05, "#3d4a52", new THREE.Vector3(tx, 9.7, tz), new THREE.Vector3(tx, 11.2, tz), 6);
+    const beaconMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x7dffb0, emissiveIntensity: 1 });
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 8), beaconMat);
+    beacon.position.set(tx, 11.3, tz);
+    g.add(beacon);
+
+    // runway + apron
+    const R = AIRFIELD.local; // { x0, x1, z }
+    const len = R.x1 - R.x0, mid = (R.x0 + R.x1) / 2;
+    const tarmac = mat("#3a3f44", { roughness: 0.95 });
+    box(g, len, 0.08, 6, tarmac, mid, 0, R.z).castShadow = false;
+    box(g, 7, 0.07, 7.5, tarmac, 6.5, 0, -2.6).castShadow = false;
+    const paint = mat("#f4f6f8");
+    for (let x = R.x0 + 4; x < R.x1 - 3; x += 4) box(g, 2, 0.02, 0.22, paint, x, 0.08, R.z).castShadow = false;
+    for (const x of [R.x0 + 1, R.x1 - 1]) for (let i = -2; i <= 2; i++) box(g, 1.4, 0.02, 0.5, paint, x, 0.08, R.z + i * 1.05).castShadow = false;
+    const lights = [];
+    for (let x = R.x0; x <= R.x1; x += 3.8) {
+      for (const dz of [-3.3, 3.3]) {
+        const m = new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffd58a, emissiveIntensity: 0.3 });
+        const l = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), m);
+        l.position.set(x, 0.2, R.z + dz);
+        g.add(l);
+        lights.push({ m, u: (x - R.x0) / len });
+      }
+    }
+    // windsock
+    tube(g, 0.05, "#3d4a52", new THREE.Vector3(R.x0 - 1.5, 0, R.z + 4.6), new THREE.Vector3(R.x0 - 1.5, 3, R.z + 4.6), 6);
+    const sock = new THREE.Mesh(new THREE.ConeGeometry(0.32, 1.5, 8, 1, true).rotateZ(Math.PI / 2).translate(0.75, 0, 0), mat("#ff7a3d", { side: THREE.DoubleSide }));
+    sock.position.set(R.x0 - 1.5, 2.85, R.z + 4.6);
+    g.add(sock);
+
+    const plane = buildPlane();
+    const PARK = { x: R.x0 + 3.5, y: 0.82 };
+    g.add(plane);
+
+    onTick((t, s) => {
+      const k = live(s, "experience", 7);
+      const since = s.since("experience");
+      glass.emissiveIntensity = Math.max(s.glow, k * 1.6);
+      signMat.emissiveIntensity = Math.max(s.night * 0.5, k * 0.5);
+      beaconMat.emissive.setHex(Math.sin(t * 2.4) > 0 ? 0x7dffb0 : 0xffffff);
+      beaconMat.emissiveIntensity = Math.abs(Math.sin(t * 2.4)) > 0.75 ? 4 : 0.3;
+      sock.rotation.y = Math.sin(t * 1.3) * 0.25;
+      sock.rotation.z = -0.15 + Math.sin(t * 2.1) * 0.06;
+      // edge lights: steady at night, a chasing wave during the moment
+      for (const l of lights) {
+        const wave = Math.max(0, Math.sin((since * 1.4 - l.u) * Math.PI * 2));
+        l.m.emissiveIntensity = Math.max(0.3 + s.night * 3.5, since < 6 ? wave * wave * 6 : 0);
+      }
+      // takeoff roll, rotate, climb out; then a fresh plane taxis in
+      const u = since - 0.5;
+      if (u < 0 || since > 11) {
+        const back = since > 11 ? easeOut((since - 11) / 0.8) : 1;
+        plane.visible = true;
+        plane.position.set(PARK.x - (1 - back) * 5, PARK.y, R.z);
+        plane.rotation.set(0, 0, 0);
+        plane.scale.setScalar(back);
+      } else if (u < 7.5) {
+        const climb = Math.max(0, u - 2.1);
+        plane.visible = true;
+        plane.scale.setScalar(1);
+        plane.position.set(PARK.x + 3.4 * u * u, PARK.y + 1.9 * climb * climb, R.z - climb * climb * 0.5);
+        plane.rotation.set(0, 0, smooth(1.7, 2.9, u) * 0.3);
+      } else plane.visible = false;
+    });
+    return 5.2; // label sits over the terminal, not the tower
+  }
+
+  /* Projects: the roll-up door opens on the workshop and the gear spins up */
   function buildGarage(g) {
     box(g, 8, 4, 6, "#cdd6c0", 0, 0, 0);
     prism(g, 9, 2.4, 6.6, "#5d7050", 0, 4, 0);
-    // half-open roll-up door with a warm glow beneath
-    const glow = new THREE.MeshStandardMaterial({ color: 0x2a2a22, emissive: 0xffb050, emissiveIntensity: 0.3 });
-    box(g, 4.6, 1.1, 0.06, glow, 0, 0, 3.0);
-    box(g, 4.6, 2.2, 0.14, "#6b7d5e", 0, 1.1, 3.03);
-    for (let i = 0; i < 4; i++) box(g, 4.6, 0.08, 0.06, "#54644a", 0, 1.3 + i * 0.5, 3.12);
+    // workshop interior behind the door
+    const glow = new THREE.MeshStandardMaterial({ color: 0x2a2a22, emissive: 0xc8742a, emissiveIntensity: 0.3 });
+    box(g, 4.6, 3.3, 0.06, glow, 0, 0, 3.0).castShadow = false;
+    box(g, 1.9, 0.9, 0.1, "#3d3328", -1.1, 0, 3.04);
+    for (const y of [1.9, 2.5]) box(g, 1.8, 0.07, 0.1, "#3d3328", 1.1, y, 3.04);
+    for (const [x, y, c] of [[0.5, 1.97, "#ff7a3d"], [0.95, 1.97, "#2563a8"], [1.5, 1.97, "#ffd166"], [0.7, 2.57, "#5d7050"], [1.4, 2.57, "#ff7a3d"]]) box(g, 0.32, 0.3, 0.1, c, x, y, 3.05);
+    const screen = new THREE.MeshStandardMaterial({ color: 0x0b1f14, emissive: 0x41ff9a, emissiveIntensity: 1.2 });
+    box(g, 0.8, 0.5, 0.06, screen, -1.1, 1.0, 3.06);
+    box(g, 0.5, 1.5, 0.1, "#54644a", 1.4, 0, 3.04);
+    // the door hangs from the top of the opening and rolls up
+    const door = new THREE.Group();
+    door.position.set(0, 3.3, 3.1);
+    box(door, 4.6, 3.3, 0.14, "#6b7d5e", 0, -3.3, 0);
+    for (let i = 0; i < 6; i++) box(door, 4.6, 0.08, 0.06, "#54644a", 0, -3.1 + i * 0.52, 0.09);
+    g.add(door);
     windowAt(g, 0.9, 0.9, -3.2, 2.0, 3.0);
     windowAt(g, 0.9, 0.9, 3.2, 2.0, 3.0);
-    onTick((t, s) => { glow.emissiveIntensity = 0.3 + s.night * 1.8; });
-    // spinning gear on the gable
+    // gear on the gable
     const gear = new THREE.Group();
     const gm = mat("#ffd166", { metalness: 0.4, roughness: 0.4 });
     gear.add(shadowed(new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.17, 6, 16), gm)));
@@ -766,12 +885,21 @@ export async function createWorld({ canvas, quality }) {
     }
     gear.position.set(0, 4.95, 3.35);
     g.add(gear);
-    onTick((t) => { gear.rotation.z = -t * 0.8; });
     lamp(g, 4.8, 2.8);
+    let k = 0;
+    onTick((t, s) => {
+      k = damp(k, live(s, "projects"), 3.5, s.dt);
+      door.scale.y = 1 - lerp(0.33, 0.9, k); // a third open at rest, rolled right up when live
+      glow.emissiveIntensity = 0.3 + s.night * 1.2 + k * 0.45;
+      screen.emissiveIntensity = 1.2 + k * 2 * (0.7 + 0.3 * Math.sin(t * 9));
+      gear.rotation.z -= s.dt * (0.8 + k * 5);
+    });
     return 6.4;
   }
 
+  /* Skills: the sign flickers on and the spare bike's wheels spin */
   function buildGearShop(g) {
+    const glass = windowMat.clone();
     box(g, 7, 3.8, 5, "#e8d9bd", 0, 0, 0);
     box(g, 7.4, 0.3, 5.4, "#6b5135", 0, 3.8, 0);
     // striped awning
@@ -779,23 +907,35 @@ export async function createWorld({ canvas, quality }) {
       const s = box(g, 1.0, 0.08, 1.5, i % 2 ? "#fff5e6" : "#ff7a3d", -3 + i, 2.75, 3.15);
       s.rotation.x = 0.42;
     }
-    windowAt(g, 3.4, 1.6, 0.9, 0.7, 2.52, "#6b5135");
+    windowAt(g, 3.4, 1.6, 0.9, 0.7, 2.52, "#6b5135", glass);
     box(g, 1.1, 2.1, 0.12, "#6b5135", -2.5, 0, 2.52);
     // rooftop sign
     const signMat = new THREE.MeshStandardMaterial({ map: textTexture("GEAR SHOP", { bg: "#ff7a3d", fg: "#ffffff", size: 64 }), roughness: 0.6, emissive: 0xffffff, emissiveIntensity: 0 });
+    signMat.emissiveMap = signMat.map;
     const signMats = [mat("#c2531a"), mat("#c2531a"), mat("#c2531a"), mat("#c2531a"), signMat, mat("#c2531a")];
     const sign = shadowed(new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.95, 0.15), signMats));
     sign.position.set(0, 4.75, 1.4);
     g.add(sign);
     tube(g, 0.05, "#3d3328", new THREE.Vector3(-1.5, 4.1, 1.35), new THREE.Vector3(-1.5, 4.3, 1.35));
     tube(g, 0.05, "#3d3328", new THREE.Vector3(1.5, 4.1, 1.35), new THREE.Vector3(1.5, 4.3, 1.35));
-    onTick((t, s) => { signMat.emissiveIntensity = s.night * 0.55; signMat.emissiveMap = signMat.map; });
-    // a spare bike leaning out front
+    // a spare bike on its stand out front
     const spare = buildBike(false);
     spare.group.position.set(-3.9, 0, 3.5);
     spare.group.rotation.set(0, 0.25, 0.12);
     spare.setCrank(1.2);
     g.add(spare.group);
+    let k = 0, crank = 1.2;
+    onTick((t, s) => {
+      const since = s.since("skills");
+      k = damp(k, live(s, "skills"), 4, s.dt);
+      // neon-style stutter for the first second, then steady
+      const stutter = since < 1 ? (Math.sin(since * 46) > -0.2 ? 1 : 0.1) : 1;
+      signMat.emissiveIntensity = Math.max(s.night * 0.55, k * 0.75 * stutter);
+      glass.emissiveIntensity = Math.max(s.glow, k * 2 * stutter);
+      for (const w of spare.wheels) w.rotation.z -= s.dt * k * 14;
+      crank += s.dt * k * 6;
+      if (k > 0.01) spare.setCrank(crank);
+    });
     return 5.4;
   }
 
@@ -834,7 +974,9 @@ export async function createWorld({ canvas, quality }) {
     return tex;
   }
 
+  /* Education: the clock hands race round, the flag runs up, the windows light */
   function buildSchool(g) {
+    const glass = windowMat.clone();
     box(g, 13, 4.6, 6, "#c97f64", 0, 0, 0);
     box(g, 13.4, 0.4, 6.4, "#6e3c2a", 0, 4.6, 0);
     // clock tower
@@ -846,9 +988,18 @@ export async function createWorld({ canvas, quality }) {
     const face = new THREE.Mesh(new THREE.CircleGeometry(1.05, 32), new THREE.MeshStandardMaterial({ map: clockTexture(), roughness: 0.6, emissive: 0xfff1d0, emissiveIntensity: 0 }));
     face.position.set(0, 7.3, 2.22);
     g.add(face);
-    onTick((t, s) => { face.material.emissiveIntensity = s.night * 0.5; face.material.emissiveMap = face.material.map; });
+    face.material.emissiveMap = face.material.map;
     tube(g, 0.06, "#6e3c2a", new THREE.Vector3(0, 11.8, 0.6), new THREE.Vector3(0, 14.2, 0.6), 6);
-    flag(g, 1.6, 0.9, 0x9d2235, 0.04, 13.7, 0.6);
+    const banner = flag(g, 1.6, 0.9, 0x9d2235, 0.04, 13.7, 0.6);
+    let k = 0;
+    onTick((t, s) => {
+      const since = s.since("education");
+      k = damp(k, live(s, "education"), 4, s.dt);
+      face.material.emissiveIntensity = Math.max(s.night * 0.5, k * 0.45);
+      face.rotation.z = since < 1.8 ? -Math.PI * 4 * easeOut(since / 1.8) : 0;
+      banner.position.y = since < 1.6 ? lerp(12.3, 13.7, easeOut((since - 0.2) / 1.2)) : 13.7;
+      glass.emissiveIntensity = Math.max(s.glow, k * 2);
+    });
     // columned entrance
     prism(g, 4.6, 1.2, 1.6, "#efe6d6", 0, 3.9, 3.7);
     box(g, 4.6, 0.3, 1.6, "#efe6d6", 0, 3.6, 3.7);
@@ -856,14 +1007,15 @@ export async function createWorld({ canvas, quality }) {
     box(g, 4.8, 0.25, 2, "#bdb3a2", 0, 0, 3.8);
     box(g, 1.4, 2.4, 0.12, "#5a3526", 0, 0, 3.02);
     for (const x of [-5.3, -3.6, 3.6, 5.3]) {
-      windowAt(g, 1.1, 1.1, x, 0.9, 3.02, "#6e3c2a");
-      windowAt(g, 1.1, 1.1, x, 2.8, 3.02, "#6e3c2a");
+      windowAt(g, 1.1, 1.1, x, 0.9, 3.02, "#6e3c2a", glass);
+      windowAt(g, 1.1, 1.1, x, 2.8, 3.02, "#6e3c2a", glass);
     }
     lamp(g, -7.6, 3.4);
     lamp(g, 7.6, 3.4);
     return 14.5;
   }
 
+  /* Leadership: the campfire flares up and throws sparks */
   function buildLodge(g) {
     box(g, 7.8, 3.9, 5.6, "#8a5d38", 0, 0, 0);
     for (let i = 0; i < 7; i++) {
@@ -905,18 +1057,56 @@ export async function createWorld({ canvas, quality }) {
     fireLight.position.set(0, 1.1, 0);
     fire.add(fireLight);
     g.add(fire);
+    // sparks
+    const N = 36;
+    const sp = { pos: new Float32Array(N * 3), a: new Float32Array(N), size: new Float32Array(N), vel: [], life: new Float32Array(N) };
+    for (let i = 0; i < N; i++) sp.vel.push(new THREE.Vector3());
+    const spGeo = new THREE.BufferGeometry();
+    spGeo.setAttribute("position", new THREE.BufferAttribute(sp.pos, 3));
+    spGeo.setAttribute("aAlpha", new THREE.BufferAttribute(sp.a, 1));
+    spGeo.setAttribute("aSize", new THREE.BufferAttribute(sp.size, 1));
+    const sparks = new THREE.Points(spGeo, new THREE.ShaderMaterial({
+      uniforms: { uScale: dustMat.uniforms.uScale, uColor: { value: new THREE.Color(0xffb347) } },
+      vertexShader: dustMat.vertexShader, fragmentShader: dustMat.fragmentShader,
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    }));
+    sparks.frustumCulled = false;
+    fire.add(sparks);
+    let last = 1e9;
     onTick((t, s) => {
-      const lit = Math.max(0.35, s.night);
+      const since = s.since("leadership");
+      const flare = envelope(since, 0.15, 1.2, 2.5);
+      if (since < last) { // just triggered: throw a burst
+        for (let i = 0; i < N; i++) {
+          sp.pos.set([(Math.random() - 0.5) * 0.4, 0.5, (Math.random() - 0.5) * 0.4], i * 3);
+          sp.vel[i].set((Math.random() - 0.5) * 1.6, 2 + Math.random() * 3.2, (Math.random() - 0.5) * 1.6);
+          sp.life[i] = 0.8 + Math.random() * 1.4;
+          sp.size[i] = 0.1 + Math.random() * 0.12;
+        }
+      }
+      last = since;
+      for (let i = 0; i < N; i++) {
+        sp.life[i] -= s.dt;
+        sp.vel[i].y -= s.dt * 1.2;
+        sp.pos[i * 3] += (sp.vel[i].x + Math.sin(t * 5 + i) * 0.4) * s.dt;
+        sp.pos[i * 3 + 1] += sp.vel[i].y * s.dt;
+        sp.pos[i * 3 + 2] += sp.vel[i].z * s.dt;
+        sp.a[i] = clamp(sp.life[i], 0, 1);
+      }
+      spGeo.attributes.position.needsUpdate = spGeo.attributes.aAlpha.needsUpdate = spGeo.attributes.aSize.needsUpdate = true;
+
+      const lit = Math.max(0.35, s.night, live(s, "leadership") * 0.8) * (1 + flare * 0.9);
       flames.forEach((f, i) => {
         const k = 0.8 + Math.sin(t * 13 + i * 2) * 0.12 + Math.sin(t * 7.3 + i) * 0.08;
         f.scale.set(lit, k * lit, lit);
       });
-      flameMat.emissiveIntensity = 1.5 + s.night * 2.5;
-      fireLight.intensity = s.night * (14 + Math.sin(t * 17) * 2.5 + Math.sin(t * 7) * 2);
+      flameMat.emissiveIntensity = 1.5 + s.night * 2.5 + flare * 3;
+      fireLight.intensity = Math.max(s.night, flare * 0.9, live(s, "leadership") * 0.4) * (14 + Math.sin(t * 17) * 2.5 + Math.sin(t * 7) * 2);
     });
     return 6.6;
   }
 
+  /* Contact: the flag goes up and a paper plane flies out */
   function buildMailbox(g) {
     const mb = new THREE.Group();
     mb.scale.setScalar(1.9);
@@ -935,26 +1125,57 @@ export async function createWorld({ canvas, quality }) {
     box(flagPivot, 0.08, 0.9, 0.05, "#9d2235", 0, 0, 0);
     box(flagPivot, 0.4, 0.28, 0.05, "#9d2235", 0.2, 0.62, 0);
     mb.add(flagPivot);
-    onTick((t) => { flagPivot.rotation.z = Math.sin(t * 2.2) > 0.2 ? 0 : -1.4; });
+    const dartGeo = new THREE.BufferGeometry();
+    dartGeo.setAttribute("position", new THREE.Float32BufferAttribute([
+      0.55, 0, 0, -0.4, 0.06, 0.3, -0.4, -0.16, 0,
+      0.55, 0, 0, -0.4, -0.16, 0, -0.4, 0.06, -0.3,
+    ], 3));
+    dartGeo.computeVertexNormals();
+    const dart = new THREE.Mesh(dartGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide, roughness: 0.8, flatShading: true, emissive: 0xffffff, emissiveIntensity: 0.25 }));
+    dart.castShadow = true;
+    dart.visible = false;
+    g.add(dart);
+    let up = 0;
+    onTick((t, s) => {
+      up = damp(up, live(s, "contact", 6) > 0.05 ? 1 : 0, 7, s.dt);
+      flagPivot.rotation.z = lerp(-1.4, 0, up);
+      const u = s.since("contact") - 0.35;
+      dart.visible = u > 0 && u < 3.2;
+      if (dart.visible) {
+        const pos = (v) => new THREE.Vector3(1.7 + 4.2 * v, 4.6 + 2.2 * v - 0.4 * v * v + Math.sin(v * 3.2) * 0.3, 0.9 * v);
+        const a = pos(u), b = pos(u + 0.05);
+        dart.position.copy(a);
+        dart.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), b.sub(a).normalize());
+        dart.scale.setScalar(0.9 * Math.min(1, u / 0.25) * (1 - smooth(2.7, 3.2, u)));
+      }
+    });
     lamp(g, 2.6, 1.2);
     return 6.2;
   }
 
   const LANDMARK_BUILDERS = {
-    about: buildHouse, experience: buildOffice, projects: buildGarage, skills: buildGearShop,
+    about: buildHouse, experience: buildAirport, projects: buildGarage, skills: buildGearShop,
     education: buildSchool, leadership: buildLodge, contact: buildMailbox,
   };
 
+  /* where the camera settles when a landmark's card is open: [position], [look-at], relative to it */
+  const LANDMARK_VIEWS = {
+    default: { pos: [-1, 5.5, 27], look: [0, 3.2, 0] },
+    leadership: { pos: [-4, 5.2, 27], look: [-2.5, 3, 0] }, // keep the campfire in frame
+    experience: { pos: [-13, 5.5, 15], look: [22, 4, -6] }, // look down the runway from beside the terminal
+    education: { pos: [0, 7.5, 36], look: [0, 5.4, 0] },
+    contact: { pos: [3, 4.8, 19], look: [3, 3.8, 0] },
+  };
   const landmarks = {};
   function buildLandmarks() {
     for (const p of PADS) {
       const g = new THREE.Group();
       const top = LANDMARK_BUILDERS[p.id](g);
       g.position.set(p.x, p.y - 0.05, p.z);
-      g.rotation.y = 0.12; // turn a touch toward the approaching rider
+      g.rotation.y = p.id === "experience" ? 0 : 0.12; // turn a touch toward the approaching rider (the runway stays square)
       g.traverse((o) => { o.userData.pick = { type: "landmark", id: p.id }; });
       scene.add(g);
-      landmarks[p.id] = { group: g, anchor: new THREE.Vector3(p.x, p.y + top + 1.4, p.z), hover: 0, label: null };
+      landmarks[p.id] = { group: g, anchor: new THREE.Vector3(p.x, p.y + top + 1.4, p.z), hover: 0, label: null, near: false, view: LANDMARK_VIEWS[p.id] ?? LANDMARK_VIEWS.default };
     }
   }
 
@@ -1003,8 +1224,9 @@ export async function createWorld({ canvas, quality }) {
     tail.position.x = -0.45;
     fish.add(fishBody, tail);
     scene.add(fish);
-    onTick((t) => {
-      const cycle = (t % 7) / 7;
+    onTick((t, s) => {
+      const jump = s.since("about") - 0.4;
+      const cycle = jump > 0 && jump < 0.84 ? (jump / 0.84) * 0.12 : (t % 7) / 7;
       bobber.position.y = -0.2 + Math.sin(t * 2.2) * 0.04;
       boat.position.y = LAKE.y + 0.25 + Math.sin(t * 1.3) * 0.05;
       boat.rotation.z = Math.sin(t * 1.1) * 0.04;
@@ -1542,7 +1764,13 @@ export async function createWorld({ canvas, quality }) {
      FRAME
      ===================================================== */
 
-  const state = { night: 0 };
+  const moments = {}; // landmark id -> world time its moment last started
+  const state = { night: 0, glow: 0, dt: 0, openId: null, since: (id) => time - (moments[id] ?? -1e9) };
+  let motionOk = true;
+  function activate(id) {
+    if (!motionOk || !landmarks[id]) return;
+    if (state.since(id) > 6) moments[id] = time; // don't restart one that's still playing
+  }
   let hopY = 0, hopV = 0, wasAirborne = false;
   let introT = 0;
   let lastS = 0;
@@ -1564,6 +1792,10 @@ export async function createWorld({ canvas, quality }) {
     lastS = s;
     const night = smooth(0.55, 0.9, progress);
     state.night = night;
+    state.dt = dt;
+    state.openId = popupId;
+    state.glow = smooth(0.5, 0.85, progress) * 2.4;
+    motionOk = !reducedMotion;
 
     /* --- rider on the trail --- */
     const by = trailY(s) + 0.05;
@@ -1634,7 +1866,7 @@ export async function createWorld({ canvas, quality }) {
     moonMat.opacity = night;
     moonGlow.material.opacity = night * 0.35;
 
-    windowMat.emissiveIntensity = smooth(0.5, 0.85, progress) * 2.4;
+    windowMat.emissiveIntensity = state.glow;
     bulbMat.emissiveIntensity = 0.2 + night * 5;
     bike.lampMat.emissiveIntensity = night * 4;
     headlight.intensity = night * 55;
@@ -1683,6 +1915,13 @@ export async function createWorld({ canvas, quality }) {
     for (const p of props) p.tick(now);
     for (const fn of tickers) fn(time, state);
 
+    // arriving beside a building wakes it up
+    for (const [i, id] of SECTION_IDS.entries()) {
+      const near = Math.abs(s - (lmX(i) - LM_AHEAD)) < 4;
+      if (near && !landmarks[id].near && introT >= 1) activate(id);
+      landmarks[id].near = near;
+    }
+
     /* --- camera --- */
     const B = bike.group.position;
     const w = window.innerWidth, h = window.innerHeight, aspect = w / h;
@@ -1709,10 +1948,10 @@ export async function createWorld({ canvas, quality }) {
     if (fid) focusId = fid;
     focus = damp(focus, fid ? 1 : 0, 2.4, dt);
     if (focusId && focus > 0.001) {
-      const L = landmarks[focusId].group.position;
-      tmpA.set(L.x - 3, L.y + 5.5, L.z + 18 * pull);
-      tmpB.set(L.x, L.y + 3.2, L.z);
-      const f = smooth(0, 1, focus) * 0.75;
+      const L = landmarks[focusId].group.position, v = landmarks[focusId].view;
+      tmpA.set(L.x + v.pos[0], L.y + v.pos[1], L.z + v.pos[2] * pull);
+      tmpB.set(L.x + v.look[0], L.y + v.look[1], L.z + v.look[2]);
+      const f = smooth(0, 1, focus);
       camPos.lerp(tmpA, f);
       camLook.lerp(tmpB, f);
     }
@@ -1727,7 +1966,9 @@ export async function createWorld({ canvas, quality }) {
     camera.lookAt(camLook);
     camera.fov = 42 + (portrait ? 8 : 0) + clamp(Math.abs(speed) * 0.35, 0, 6);
     // hero framing: rider sits right of the headline (below it on phones)
-    const offX = portrait ? 0 : -w * 0.17 * hero;
+    // with a card open on a wide screen, the building sits left of it
+    const side = w >= 1000 && !portrait ? smooth(0, 1, focus) : 0;
+    const offX = portrait ? 0 : -w * 0.17 * hero + w * 0.21 * side;
     const offY = portrait ? -h * lerp(0.1, 0.33, hero) : 0;
     camera.setViewOffset(w, h, offX, offY, w, h);
     sky.position.copy(camera.position);
@@ -1787,7 +2028,7 @@ export async function createWorld({ canvas, quality }) {
   if (location.search.includes("debug")) window.__three = { THREE, scene, renderer, camera, sun, hemi, bike, composer: () => composer };
 
   return {
-    frame, resize, pick, poke, hop, setHacked, collectBadge, addBadge, degrade,
+    frame, resize, pick, poke, hop, setHacked, collectBadge, addBadge, degrade, activate,
     sectionIds: SECTION_IDS,
   };
 }

@@ -87,6 +87,7 @@ function openPopup(id) {
   if (!p) return;
   p.classList.add("open");
   openId = id;
+  world?.activate(id); // the building comes alive behind its card
   document.body.style.overflow = "hidden";
   lastFocused = document.activeElement;
   p.querySelector(".popup-close")?.focus({ preventScroll: true });
