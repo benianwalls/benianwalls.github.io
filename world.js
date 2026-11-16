@@ -68,6 +68,10 @@ function ridged(x, y, oct = 5) {
 export const SECTION_IDS = ["about", "experience", "projects", "skills", "education", "leadership", "contact"];
 const SPACING = 56;
 const TRAIL_LEN = SPACING * SECTION_IDS.length;
+const RUN_OUT = 36;                       // past the last stop: under the arch to the overlook
+const RIDE_LEN = TRAIL_LEN + RUN_OUT;
+/* how far through the whole ride (0..1) the rider parks at each stop */
+export const STOP_PROGRESS = SECTION_IDS.map((_, i) => ((i + 1) * SPACING) / RIDE_LEN);
 const LM_AHEAD = 3.5;   // landmark sits a little past where the rider stops
 const LM_BACK = 11;     // and this far off the far side of the trail
 
@@ -520,6 +524,7 @@ export async function createWorld({ canvas, quality }) {
       if (Math.hypot(x - LAKE.x, z - LAKE.z) < LAKE.r * 1.25 + rad) return false;
       for (const p of PADS) if (Math.hypot(x - p.x, z - p.z) < p.r + rad) return false;
       if (Math.abs(x - (TRAIL_LEN + 11)) < 7 && Math.abs(z - trailZ(x)) < 5) return false; // finish arch
+      if (x > TRAIL_LEN + 24 && x < TRAIL_LEN + 50 && Math.abs(z - trailZ(x)) < 10) return false; // overlook
       if (x > -14 && x < 2 && Math.abs(z - trailZ(x)) < 7) return false; // trailhead
       if (x > AIRFIELD.x0 - 2 && x < AIRFIELD.x1 + 2 && z > AIRFIELD.z0 - 3 && z < trailZ(x) - 1.2) return false; // airfield stays open
       cell.set(k, 1);
@@ -1268,6 +1273,17 @@ export async function createWorld({ canvas, quality }) {
     signBoard("TRAILHEAD", -9, trailZ(-9) - 2.6, { w: 2.2, post: 1.4 });
 
     // finish arch over the trail
+    // the overlook where the ride ends: a bench and a lantern facing the valley
+    const ox = RIDE_LEN + 3;
+    const ov = new THREE.Group();
+    ov.position.set(ox, trailY(ox), trailZ(ox) - 3.2);
+    ov.rotation.y = 0.5;
+    box(ov, 2.2, 0.12, 0.6, "#8a6a48", 0, 0.5, 0);
+    box(ov, 2.2, 0.5, 0.1, "#8a6a48", 0, 0.75, -0.28);
+    for (const x of [-0.9, 0.9]) box(ov, 0.12, 0.5, 0.5, "#5a4330", x, 0, 0);
+    lamp(ov, 1.9, 0.2);
+    scene.add(ov);
+
     const ax = TRAIL_LEN + 11;
     const g = new THREE.Group();
     g.position.set(ax, trailY(ax), trailZ(ax));
@@ -1275,8 +1291,8 @@ export async function createWorld({ canvas, quality }) {
     for (const z of [-2.6, 2.6]) tube(g, 0.16, "#5a4330", new THREE.Vector3(0, 0, z), new THREE.Vector3(0, 4.4, z), 8);
     const front = new THREE.MeshStandardMaterial({ map: textTexture("THANKS FOR RIDING", { bg: "#ff7a3d", fg: "#fff", w: 1024, h: 128, size: 76 }), roughness: 0.7 });
     const wood = mat("#c2531a");
-    // the banner faces the approaching rider (-x)
-    const banner = shadowed(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.9, 5.6), [wood, front, wood, wood, wood, wood]));
+    // readable on the way in, and again from the overlook looking back
+    const banner = shadowed(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.9, 5.6), [front, front, wood, wood, wood, wood]));
     banner.position.set(0, 4.0, 0);
     g.add(banner);
     scene.add(g);
@@ -1649,6 +1665,8 @@ export async function createWorld({ canvas, quality }) {
     { p: 0.6, top: 0x4f63a6, hor: 0xff9d5c, fog: 0xd9967a, sun: 0xff9050, sunI: 1.9, hemi: 0.8, exp: 1.05 },
     { p: 0.76, top: 0x1d2552, hor: 0x7a3f6b, fog: 0x4a3456, sun: 0xc06070, sunI: 0.6, hemi: 0.45, exp: 1.1 },
     { p: 0.9, top: 0x050915, hor: 0x241d48, fog: 0x121630, sun: 0x8fa8ff, sunI: 0.6, hemi: 0.42, exp: 1.15 },
+    { p: 0.945, top: 0x050915, hor: 0x241d48, fog: 0x121630, sun: 0x8fa8ff, sunI: 0.6, hemi: 0.42, exp: 1.15 },
+    { p: 1.0, top: 0x3f6aa8, hor: 0xffb98a, fog: 0xb99a94, sun: 0xffc79a, sunI: 1.5, hemi: 0.75, exp: 1.08 }, // dawn at the overlook
   ].map((k) => ({ ...k, top: new THREE.Color(k.top), hor: new THREE.Color(k.hor), fog: new THREE.Color(k.fog), sun: new THREE.Color(k.sun) }));
 
   function palette(p, out) {
@@ -1789,10 +1807,12 @@ export async function createWorld({ canvas, quality }) {
     introT = Math.min(1, introT + dt / 1.7);
     const intro = reducedMotion ? 1 : 1 - Math.pow(1 - introT, 3);
 
-    const s = progress * TRAIL_LEN - (1 - intro) * 16;
+    const s = progress * RIDE_LEN - (1 - intro) * 16;
     const speed = dt > 0 ? (s - lastS) / dt : 0;
     lastS = s;
-    const night = smooth(0.55, 0.9, progress);
+    const night = smooth(0.55, 0.9, progress);   // lamps and windows stay lit to the end
+    const dawn = smooth(0.945, 1, progress);     // first light over the last stretch
+    const dark = night * (1 - dawn);             // what the sky itself is doing
     state.night = night;
     state.dt = dt;
     state.openId = popupId;
@@ -1840,15 +1860,15 @@ export async function createWorld({ canvas, quality }) {
 
     /* --- sky, sun, light --- */
     palette(progress, pal);
-    const el = lerp(0.62, -0.1, smooth(0.0, 0.82, progress));
-    const az = lerp(0.55, -0.45, progress);
+    const el = lerp(lerp(0.62, -0.1, smooth(0.0, 0.82, progress)), 0.25, dawn);
+    const az = lerp(lerp(0.55, -0.45, progress), -0.62, dawn);
     const sunDir = tmpB.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)).normalize();
     skyMat.uniforms.uTop.value.copy(pal.top);
     skyMat.uniforms.uHor.value.copy(pal.hor);
     skyMat.uniforms.uBot.value.copy(pal.fog).multiplyScalar(0.6);
     skyMat.uniforms.uSunDir.value.copy(sunDir);
     skyMat.uniforms.uSunCol.value.copy(pal.sun);
-    skyMat.uniforms.uSunVis.value = 1 - smooth(0.7, 0.86, progress);
+    skyMat.uniforms.uSunVis.value = Math.max(1 - smooth(0.7, 0.86, progress), dawn);
     scene.fog.color.copy(hacked ? HACK_FOG : pal.fog);
     scene.fog.near = hacked ? 10 : 70;
     scene.fog.far = hacked ? 140 : 650;
@@ -1864,22 +1884,22 @@ export async function createWorld({ canvas, quality }) {
     hemi.color.copy(pal.top).lerp(WHITE, 0.5);
     renderer.toneMappingExposure = pal.exp;
 
-    starMat.opacity = night * 0.95;
-    moonMat.opacity = night;
-    moonGlow.material.opacity = night * 0.35;
+    starMat.opacity = dark * 0.95;
+    moonMat.opacity = dark;
+    moonGlow.material.opacity = dark * 0.35;
 
     windowMat.emissiveIntensity = state.glow;
     bulbMat.emissiveIntensity = 0.2 + night * 5;
     bike.lampMat.emissiveIntensity = night * 4;
-    headlight.intensity = night * 55;
-    beamMat.uniforms.uOpacity.value = hacked ? 0 : night * 0.085;
+    headlight.intensity = night * 55 * (1 - dawn * 0.6);
+    beamMat.uniforms.uOpacity.value = hacked ? 0 : dark * 0.085;
     beam.visible = beamMat.uniforms.uOpacity.value > 0.002;
     ffMat.uniforms.uTime.value = time;
-    ffMat.uniforms.uNight.value = hacked ? 0 : night;
+    ffMat.uniforms.uNight.value = hacked ? 0 : dark;
 
     if (bloom) {
-      bloom.strength = hacked ? 0.45 : lerp(0.25, 0.85, night);
-      bloom.threshold = hacked ? 0.15 : lerp(0.92, 0.55, night);
+      bloom.strength = hacked ? 0.45 : lerp(0.25, 0.85, night * (1 - dawn * 0.5));
+      bloom.threshold = hacked ? 0.15 : lerp(0.92, 0.55, night * (1 - dawn * 0.5));
       bloom.radius = hacked ? 0.25 : 0.55;
     }
 
@@ -1960,6 +1980,15 @@ export async function createWorld({ canvas, quality }) {
       camLook.lerp(tmpB, f);
     }
 
+    // finale: past the arch the camera lifts and turns to look back down the valley
+    const finale = smooth(0.955, 1, progress) * (1 - smooth(0, 1, focus));
+    if (finale > 0.001) {
+      tmpA.set(B.x + 10 * pull, B.y + 8.5 + (pull - 1) * 4, B.z + 21 * pull);
+      tmpB.set(B.x - 24, B.y + 3.5, B.z - 9);
+      camPos.lerp(tmpA, finale);
+      camLook.lerp(tmpB, finale);
+    }
+
     // a touch of pointer parallax
     pointer.sx = damp(pointer.sx, reducedMotion ? 0 : pointer.x, 3, dt);
     pointer.sy = damp(pointer.sy, reducedMotion ? 0 : pointer.y, 3, dt);
@@ -1971,7 +2000,7 @@ export async function createWorld({ canvas, quality }) {
     camera.fov = 42 + (portrait ? 8 : 0) + clamp(Math.abs(speed) * 0.35, 0, 6);
     // hero framing: rider sits right of the headline (below it on phones)
     // with a card open on a wide screen, the building sits left of it
-    const side = w >= 1000 && !portrait ? smooth(0, 1, focus) : 0;
+    const side = w >= 1000 && !portrait ? Math.max(smooth(0, 1, focus), finale * 0.85) : 0;
     const offX = portrait ? 0 : -w * 0.17 * hero + w * 0.21 * side;
     const offY = portrait ? -h * lerp(0.1, 0.33, hero) : 0;
     camera.setViewOffset(w, h, offX, offY, w, h);

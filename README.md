@@ -40,5 +40,6 @@ python3 -m http.server 4173
 - **Arrival moments:** each `build*` function ends with an `onTick` that reads `live(s, id)` (0..1, how awake the building is) and `s.since(id)`; `activate(id)` fires on arrival and when a card opens. Card camera framing is `LANDMARK_VIEWS`
 - **Buildings:** the `build*` functions (`buildHouse`, `buildOffice`, …) in `world.js`
 - **Day → night timing:** the `KEYS` palette array and `night` in `frame()`
+- **The ending:** `RUN_OUT` in `world.js` is the stretch past the last stop (arch, dawn, pull-back camera: search `finale` and `dawn`); `updateEnding()` in `script.js` opens the closing card
 - **Camera framing:** the "camera" block near the end of `frame()`
 - **Low-end devices:** `quality` in `script.js` (shadows/bloom are desktop-only; slow GPUs auto-degrade)

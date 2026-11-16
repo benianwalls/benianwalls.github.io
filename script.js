@@ -3,7 +3,7 @@
    (the scene itself lives in world.js)
    ===================================================== */
 
-import { createWorld, SECTION_IDS } from "./world.js";
+import { createWorld, SECTION_IDS, STOP_PROGRESS } from "./world.js";
 import { initCoach } from "./coach.js";
 import { icon, mountIcons } from "./icons.js";
 
@@ -45,7 +45,7 @@ let sectionScrollTargets = {};
 function measure() {
   maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
   SECTION_IDS.forEach((id, i) => {
-    sectionScrollTargets[id] = Math.round(((i + 1) / SECTION_IDS.length) * maxScroll);
+    sectionScrollTargets[id] = Math.round(STOP_PROGRESS[i] * maxScroll);
   });
 }
 
@@ -388,13 +388,14 @@ async function startTour() {
     if (!(await tweenScroll(y, duration))) return;
     if (!(await tourPause(650))) return; // let the scene settle at the landmark
     openPopup(id);
-    if (i === SECTION_IDS.length - 1) break; // finale: leave "Let's Connect" open
     // ride on only once the visitor closes the card
     tourPopupOpen = true;
     if (!(await waitForPopupClose())) return;
     tourPopupOpen = false;
     if (!(await tourPause(450))) return; // brief beat before the next leg
   }
+  // last leg: under the arch to the overlook, where the closing card opens itself
+  if (!(await tweenScroll(maxScroll, reducedMotion ? 0 : 3200))) return;
   stopTour();
 }
 
@@ -418,10 +419,31 @@ for (const evt of ["wheel", "touchstart", "keydown", "mousedown"]) {
   }, { passive: true });
 }
 
-document.getElementById("back-to-start")?.addEventListener("click", () => {
-  closePopups();
-  window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
-});
+for (const b of document.querySelectorAll(".back-to-start")) {
+  b.addEventListener("click", () => {
+    closePopups();
+    window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
+  });
+}
+
+/* the ending: once the rider coasts to the overlook and the camera has pulled
+   back, the closing card arrives by itself (once per trip to the end) */
+let endTimer = 0, finishShown = false;
+function updateEnding(progress, dt) {
+  if (progress > 0.995) {
+    endTimer += dt;
+    if (endTimer > 1.3 && !finishShown && !openId) {
+      finishShown = true;
+      document.getElementById("finish-coins").textContent = collected.size
+        ? `Seven stops, and ${collected.size} of ${BADGE_TOTAL} coins found.`
+        : "Seven stops down.";
+      openPopup("finish");
+    }
+  } else if (progress < 0.95) {
+    endTimer = 0;
+    finishShown = false;
+  }
+}
 
 window.addEventListener("wheel", (e) => {
   if (!canScrollPage()) return;
@@ -479,6 +501,7 @@ function frame(now) {
   document.body.classList.toggle("night", night > 0.5);
 
   els.progress.style.width = (progress * 100).toFixed(2) + "%";
+  updateEnding(progress, dt);
   updateNav(current);
 
   // a struggling GPU gets a lighter scene (sampled over the first few seconds)

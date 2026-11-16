@@ -751,6 +751,19 @@ body.hacked .quick-list li { border-color: #00ff88; }
 .quick-chips { margin-bottom: 1.4rem; }
 .quick-card .contact-links { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; }
 
+/* ============ CLOSING CARD ============ */
+.finish-card h2 { margin-bottom: 1.1rem; }
+.finish-recap { color: var(--ink-2) !important; }
+.finish-list { list-style: none; display: grid; gap: 0.6rem; margin: 0.9rem 0 1.2rem; }
+.finish-list li { display: flex; gap: 0.7rem; align-items: flex-start; line-height: 1.45; font-weight: 500; }
+.finish-list .ico { color: var(--orange-ink); margin-top: 0.12em; }
+.finish-ask { font-weight: 600; color: var(--ink) !important; }
+.finish-links { display: grid; grid-template-columns: 1fr 1fr; margin: 1rem 0 1.1rem; }
+.contact-btn.primary { background: var(--orange); border-color: var(--orange); }
+.contact-btn.primary:hover { background: var(--ink); border-color: var(--ink); }
+@media (max-width: 640px) { .finish-links { grid-template-columns: 1fr; } }
+body.hacked .finish-list .ico { color: #00ff88; }
+
 /* ============ RECRUITER COACH ============ */
 #coach {
   position: fixed;
