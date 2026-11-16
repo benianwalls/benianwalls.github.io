@@ -508,7 +508,7 @@ body.riding .scroll-hint { opacity: 0; transform: translateY(10px); pointer-even
 }
 
 /* contact */
-.contact-card { text-align: center; max-width: 520px; margin: 0 auto; }
+.contact-card .contact-btn { justify-content: flex-start; }
 .contact-links { display: flex; flex-direction: column; gap: 0.6rem; margin: 1.6rem 0 1.4rem; }
 .contact-btn {
   display: flex;
@@ -572,9 +572,12 @@ body.riding .scroll-hint { opacity: 0; transform: translateY(10px); pointer-even
 }
 /* during the tour, cards drift in slowly instead of popping */
 body.touring .popup-panel { animation: popup-in 0.9s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+/* sticky, so it stays reachable while a long card scrolls */
 .popup-close {
-  position: absolute;
-  top: 14px; right: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0 0 -36px auto;
   width: 36px; height: 36px;
   display: grid;
   place-items: center;
@@ -588,25 +591,62 @@ body.touring .popup-panel { animation: popup-in 0.9s cubic-bezier(0.2, 0.8, 0.3,
 .popup-close:hover { background: var(--ink); color: #fff; }
 @media (max-width: 640px) {
   /* bigger tap target on phones */
-  .popup-close { width: 44px; height: 44px; top: 10px; right: 10px; }
+  .popup-close { width: 44px; height: 44px; margin-bottom: -44px; }
 }
 
-/* wide screens: a landmark's card sits to the right so its building, and
-   whatever it is doing, stays in view on the left (world.js frames it there) */
+/* Landmark cards never cover their building:
+   wide screens get a full-height side panel, narrow ones a bottom sheet.
+   (world.js re-centres the scene in the space that is left.) */
+.popup:not(#popup-quick) {
+  padding: 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.popup:not(#popup-quick) .card { max-width: none; margin: 0; text-align: left; }
 @media (min-width: 1000px) {
-  .popup:not(#popup-quick) {
-    justify-content: flex-end;
-    padding-right: 4vw;
-    background: linear-gradient(90deg, rgba(10, 16, 12, 0) 0%, rgba(10, 16, 12, 0.12) 38%, rgba(10, 16, 12, 0.5) 100%);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+  .popup:not(#popup-quick) { justify-content: flex-end; align-items: stretch; }
+  .popup:not(#popup-quick) .card {
+    width: min(520px, 42vw);
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+    padding: 2.2rem 2.2rem 3rem;
+    box-shadow: -18px 0 50px rgba(0, 0, 0, 0.25), -1px 0 0 rgba(20, 35, 26, 0.08);
+    animation-name: panel-in;
   }
-  .popup:not(#popup-quick) .card { max-width: min(600px, 45vw); margin: 0; animation-name: popup-slide; }
 }
-@keyframes popup-slide {
-  from { opacity: 0; transform: translateX(28px); }
-  to { opacity: 1; transform: translateX(0); }
+@media (max-width: 999px) {
+  .popup:not(#popup-quick) { align-items: flex-end; }
+  .popup:not(#popup-quick) .card {
+    width: 100%;
+    max-height: 58vh;
+    max-height: 58dvh;
+    border-radius: 18px 18px 0 0;
+    padding: 1.6rem 1.3rem 2.2rem;
+    box-shadow: 0 -14px 44px rgba(0, 0, 0, 0.3);
+    animation-name: sheet-in;
+  }
+  /* grab handle: the sheet can be swiped down to close */
+  .popup:not(#popup-quick) .card::before {
+    content: "";
+    display: block;
+    width: 40px; height: 4px;
+    margin: -0.7rem auto 0.9rem;
+    border-radius: 2px;
+    background: var(--line);
+  }
 }
+@keyframes panel-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+body.touring .popup:not(#popup-quick) .popup-panel { animation-duration: 0.5s; }
 
 /* ============ CLICKABLE WORLD ============ */
 /* coin counter */
@@ -739,7 +779,7 @@ body.hacked .quick-list li { border-color: #00ff88; }
   padding-bottom: 1.2rem;
   margin-bottom: 1.3rem;
   border-bottom: 1px solid var(--line);
-  padding-right: 40px;
+  padding-right: 44px;
 }
 .quick-head .portrait { width: 88px; height: 88px; }
 .quick-head h2 { border: 0; padding: 0; margin: 0 0 0.3rem; }
@@ -952,3 +992,6 @@ body.hacked .coach-link { color: #41ff9a; }
   .scroll-cta .chev, .hero-inner > *, .coach-typing span, .loader-wheel, .lm-tag.near .lm-label::before { animation: none; }
   .scroll-cta .chev { opacity: 0.7; }
 }
+
+/* leave room for the sticky close button beside card titles */
+.popup-panel > h2, .popup-panel > .kicker { padding-right: 44px; }

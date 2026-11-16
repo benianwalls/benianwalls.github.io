@@ -1274,14 +1274,18 @@ export async function createWorld({ canvas, quality }) {
 
     // finish arch over the trail
     // the overlook where the ride ends: a bench and a lantern facing the valley
-    const ox = RIDE_LEN + 3;
+    const ox = RIDE_LEN + 2.4;
     const ov = new THREE.Group();
-    ov.position.set(ox, trailY(ox), trailZ(ox) - 3.2);
-    ov.rotation.y = 0.5;
+    ov.position.set(ox, trailY(ox), trailZ(ox) - 2.7);
+    ov.rotation.y = -0.95; // the bench looks back down the trail
     box(ov, 2.2, 0.12, 0.6, "#8a6a48", 0, 0.5, 0);
     box(ov, 2.2, 0.5, 0.1, "#8a6a48", 0, 0.75, -0.28);
     for (const x of [-0.9, 0.9]) box(ov, 0.12, 0.5, 0.5, "#5a4330", x, 0, 0);
-    lamp(ov, 1.9, 0.2);
+    lamp(ov, -1.8, -0.1);
+    seated = buildSeatedRider();
+    seated.position.set(0.25, 0, 0.02);
+    seated.visible = false;
+    ov.add(seated);
     scene.add(ov);
 
     const ax = TRAIL_LEN + 11;
@@ -1472,6 +1476,54 @@ export async function createWorld({ canvas, quality }) {
     setCrank(0);
 
     return { group, pivot, body, wheels, setCrank, lampMat, lampPos: lampHead.position, rider };
+  }
+
+  /* the same rider, off the bike: sitting on the overlook bench at the end */
+  let seated = null;
+  function buildSeatedRider() {
+    const skin = mat("#9c6644", { flatShading: false, roughness: 0.7 });
+    const jersey = mat("#2563a8", { flatShading: false, roughness: 0.75 });
+    const shorts = mat("#1f2a36", { flatShading: false, roughness: 0.8 });
+    const dark = mat("#1c1f24");
+    const V = (x, y, z) => new THREE.Vector3(x, y, z);
+    const g = new THREE.Group();
+    const R = new THREE.Group(); // modelled at rider scale, facing +z, seat height 0.62
+    R.scale.setScalar(1.25);
+    g.add(R);
+    const ball = (r, m, p) => { const b = shadowed(new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), m)); b.position.copy(p); R.add(b); return b; };
+
+    const hip = V(0, 0.6, 0), chest = V(0, 1.12, 0.1);
+    tube(R, 0.13, jersey, hip, chest, 12);
+    ball(0.13, jersey, hip); ball(0.13, jersey, chest);
+    const pack = shadowed(new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.34, 0.1), mat("#2d3436")));
+    pack.position.set(0, 0.9, -0.1);
+    pack.rotation.x = 0.18;
+    R.add(pack);
+    const headC = V(0, 1.33, 0.15);
+    tube(R, 0.05, skin, V(0, 1.16, 0.11), headC, 8);
+    ball(0.11, skin, headC);
+    const helmet = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.128, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat("#ff7a3d", { flatShading: false, roughness: 0.4, metalness: 0.1 })));
+    helmet.position.set(0, 1.345, 0.14);
+    helmet.rotation.x = 0.25;
+    helmet.scale.set(1, 1, 1.12);
+    R.add(helmet);
+    for (const side of [1, -1]) {
+      // legs: thighs along the seat, shins down, feet on the ground
+      const h = V(0.1 * side, 0.6, 0.02), knee = V(0.13 * side, 0.56, 0.46), ankle = V(0.14 * side, 0.1, 0.52);
+      tube(R, 0.07, shorts, h, knee, 10);
+      tube(R, 0.052, skin, knee, ankle, 10);
+      ball(0.06, skin, knee);
+      const shoe = shadowed(new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.21), dark));
+      shoe.position.set(0.14 * side, 0.045, 0.56);
+      R.add(shoe);
+      // arms: forearms resting on the knees
+      const sh = V(0.17 * side, 1.1, 0.1), elbow = V(0.22 * side, 0.82, 0.22), hand = V(0.13 * side, 0.64, 0.42);
+      tube(R, 0.055, jersey, sh, sh.clone().lerp(elbow, 0.6), 8);
+      tube(R, 0.045, skin, sh.clone().lerp(elbow, 0.55), elbow, 8);
+      tube(R, 0.04, skin, elbow, hand, 8);
+      ball(0.045, dark, hand);
+    }
+    return g;
   }
 
   /* the hero bike + headlight + hit box */
@@ -1792,6 +1844,7 @@ export async function createWorld({ canvas, quality }) {
     if (state.since(id) > (replay ? 2 : 9)) moments[id] = time;
   }
   let hopY = 0, hopV = 0, wasAirborne = false;
+  let seat = 0; // 0 riding, 1 sitting on the overlook bench
   let introT = 0;
   let lastS = 0;
   let time = 0;
@@ -1799,7 +1852,7 @@ export async function createWorld({ canvas, quality }) {
   const projected = new THREE.Vector3();
 
   function hop() {
-    if (hopY === 0) hopV = 4.4;
+    if (hopY === 0 && seat < 0.5) hopV = 4.4;
   }
 
   function frame({ progress, dt, popupId, reducedMotion, labels }) {
@@ -1937,14 +1990,25 @@ export async function createWorld({ canvas, quality }) {
     for (const p of props) p.tick(now);
     for (const fn of tickers) fn(time, state);
 
-    // arriving beside a building wakes it up
+    // which stop the rider is beside (its tag becomes the "View …" button)
     for (const [i, id] of SECTION_IDS.entries()) {
-      const gap = Math.abs(s - (lmX(i) - LM_AHEAD));
-      const near = gap < 4;
-      if (near && !landmarks[id].near && introT >= 1) activate(id);
-      landmarks[id].near = near;
-      landmarks[id].close = gap < 11;
+      landmarks[id].close = Math.abs(s - (lmX(i) - LM_AHEAD)) < 11;
     }
+
+    // at the overlook the rider gets off and sits on the bench; the bike rests on its stand
+    const wantSeat = progress > 0.997 && Math.abs(speed) < 0.5 ? 1 : 0;
+    const before = seat;
+    seat = reducedMotion ? wantSeat : damp(seat, wantSeat, 7, dt);
+    if ((before < 0.5) !== (seat < 0.5)) emitDust(bike.group.position, 8, 0.8);
+    if (bike.rider.root) {
+      bike.rider.root.visible = seat < 0.98;
+      bike.rider.root.scale.setScalar(1 - seat);
+    }
+    seated.visible = seat > 0.02;
+    seated.scale.setScalar(seat);
+    bike.pivot.rotation.x = seat * 0.2;
+    headlight.intensity *= 1 - seat;
+    bike.lampMat.emissiveIntensity *= 1 - seat;
 
     /* --- camera --- */
     const B = bike.group.position;
@@ -2000,9 +2064,12 @@ export async function createWorld({ canvas, quality }) {
     camera.fov = 42 + (portrait ? 8 : 0) + clamp(Math.abs(speed) * 0.35, 0, 6);
     // hero framing: rider sits right of the headline (below it on phones)
     // with a card open on a wide screen, the building sits left of it
-    const side = w >= 1000 && !portrait ? Math.max(smooth(0, 1, focus), finale * 0.85) : 0;
-    const offX = portrait ? 0 : -w * 0.17 * hero + w * 0.21 * side;
-    const offY = portrait ? -h * lerp(0.1, 0.33, hero) : 0;
+    // keep the scene centred in whatever the open card leaves free: beside the
+    // side panel on wide screens, above the bottom sheet on narrow ones
+    const open = Math.max(smooth(0, 1, focus), finale * 0.85);
+    const wide = w >= 1000;
+    const offX = (portrait ? 0 : -w * 0.17 * hero) + (wide ? (Math.min(520, w * 0.42) / 2) * open : 0);
+    const offY = (portrait ? -h * lerp(0.1, 0.33, hero) : 0) + (wide ? 0 : h * 0.3 * open);
     camera.setViewOffset(w, h, offX, offY, w, h);
     sky.position.copy(camera.position);
 

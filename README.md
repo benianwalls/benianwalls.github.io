@@ -37,7 +37,7 @@ python3 -m http.server 4173
 ## Tweaking
 
 - **Trail shape / spacing:** `trailZ`, `trailY`, `SPACING` at the top of `world.js`
-- **Arrival moments:** each `build*` function ends with an `onTick` that reads `live(s, id)` (0..1, how awake the building is) and `s.since(id)`; `activate(id)` fires on arrival and when a card opens. Card camera framing is `LANDMARK_VIEWS`
+- **Arrival moments:** each `build*` function ends with an `onTick` that reads `live(s, id)` (0..1, how awake the building is) and `s.since(id)`; `activate(id)` fires when a building is clicked (its card opens as a side panel on wide screens, a bottom sheet on narrow ones). Card camera framing is `LANDMARK_VIEWS`
 - **Buildings:** the `build*` functions (`buildHouse`, `buildOffice`, …) in `world.js`
 - **Day → night timing:** the `KEYS` palette array and `night` in `frame()`
 - **The ending:** `RUN_OUT` in `world.js` is the stretch past the last stop (arch, dawn, pull-back camera: search `finale` and `dawn`); `updateEnding()` in `script.js` opens the closing card
