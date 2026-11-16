@@ -6,6 +6,9 @@
 <title>Benian Walls | Cybersecurity &amp; Global Policy</title>
 <meta name="description" content="Benian Walls, cybersecurity student at Indiana University. Scroll to ride through my experience, projects, and skills." />
 <meta name="theme-color" content="#8ecae6" />
+<!-- security: only this site, Google Fonts, and Cloudflare analytics may load; the hash is the import map below -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-bgMiZ5XudRc3ON+iOP7TJVjZSb2mE636fa8zgcfI2dE=' https://static.cloudflareinsights.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com https://*.workers.dev; object-src 'none'; base-uri 'self'; form-action 'self'" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
 <!-- set to the deployed worker URL (see ../benian-coach) to answer with Claude; empty = instant in-browser answers -->
 <meta name="coach-endpoint" content="" />
 <link rel="canonical" href="https://benianwalls.com/" />
@@ -170,7 +173,7 @@
       <p class="kicker">Mile 01</p>
       <h2>About</h2>
       <div class="about-flex">
-        <img class="portrait" src="assets/headshot.jpg" alt="Benian Walls" loading="lazy" onerror="this.style.display='none'" />
+        <img class="portrait" src="assets/headshot.jpg" alt="Benian Walls" loading="lazy" />
         <p>I’m a cybersecurity student at Indiana University’s Luddy School of Informatics, Computing, and Engineering, graduating in May 2028. I enjoy learning both the technical and broader sides of security, from working with vulnerability management, phishing simulations, and SIEM tools to understanding how cybersecurity impacts organizations and the world around us.</p>
       </div>
       <ul class="fact-list">
@@ -182,15 +185,15 @@
       </ul>
       <div class="photo-strip">
         <figure class="photo">
-          <img src="assets/fishing.jpg" alt="Benian holding a freshly caught bass on a lake boardwalk" loading="lazy" onerror="this.closest('.photo').style.display='none'" />
+          <img src="assets/fishing.jpg" alt="Benian holding a freshly caught bass on a lake boardwalk" loading="lazy" />
           <figcaption class="mono">On the water</figcaption>
         </figure>
         <figure class="photo">
-          <img src="assets/travel.jpg" alt="Benian in San Francisco with the Bay Bridge behind him" loading="lazy" onerror="this.closest('.photo').style.display='none'" />
+          <img src="assets/travel.jpg" alt="Benian in San Francisco with the Bay Bridge behind him" loading="lazy" />
           <figcaption class="mono">San Francisco</figcaption>
         </figure>
         <figure class="photo">
-          <img src="assets/bike.jpg" alt="Benian and a riding buddy holding their bikes in front of a covered bridge" loading="lazy" onerror="this.closest('.photo').style.display='none'" />
+          <img src="assets/bike.jpg" alt="Benian and a riding buddy holding their bikes in front of a covered bridge" loading="lazy" />
           <figcaption class="mono">Actual trails</figcaption>
         </figure>
       </div>
@@ -204,7 +207,7 @@
       <h2>Experience</h2>
 
       <div class="job club-job">
-        <img class="club-logo" src="assets/indianapolis_airport_authority_logo.jpeg" alt="Indianapolis Airport Authority logo" loading="lazy" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/indianapolis_airport_authority_logo.jpeg" alt="Indianapolis Airport Authority logo" loading="lazy" />
         <div class="club-body">
         <div class="job-head">
           <h3>Cybersecurity Intern</h3>
@@ -219,7 +222,7 @@
       </div>
 
       <div class="job club-job">
-        <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" loading="lazy" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" loading="lazy" />
         <div class="club-body">
         <div class="job-head">
           <h3>Student IT Support</h3>
@@ -234,7 +237,7 @@
       </div>
 
       <div class="job club-job">
-        <img class="club-logo" src="assets/byteshield_sol.jpeg" alt="ByteShield Solutions logo" loading="lazy" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/byteshield_sol.jpeg" alt="ByteShield Solutions logo" loading="lazy" />
         <div class="club-body">
         <div class="job-head">
           <h3>Security Solutions Specialist (Contract)</h3>
@@ -311,7 +314,7 @@
       <p class="kicker">Mile 05</p>
       <h2>Education &amp; Certificates</h2>
       <div class="job club-job">
-        <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" loading="lazy" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" loading="lazy" />
         <div class="club-body">
         <div class="job-head">
           <h3>B.S. Cybersecurity &amp; Global Policy</h3>
@@ -326,7 +329,7 @@
         </div>
       </div>
       <div class="job club-job">
-        <img class="club-logo" src="assets/google.png" alt="Google logo" loading="lazy" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/google.png" alt="Google logo" loading="lazy" />
         <div class="club-body">
         <div class="job-head">
           <h3>Google Cybersecurity Certificate</h3>
@@ -339,7 +342,7 @@
         </div>
       </div>
       <div class="job club-job">
-        <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" loading="lazy" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/IUlogo.jpeg" alt="Indiana University logo" loading="lazy" />
         <div class="club-body">
         <div class="job-head">
           <h3>GenAI 101 Certificate</h3>
@@ -360,7 +363,7 @@
       <p class="kicker">Mile 06</p>
       <h2>Leadership &amp; Involvement</h2>
       <div class="job club-job">
-        <div class="club-logo logo-tile" aria-hidden="true"><svg class="ico"><use href="#i-spark"/></svg></div>
+        <img class="club-logo logo-full" src="assets/openai-student-collective.jpg" alt="OpenAI Student Collective logo" loading="lazy" />
         <div class="club-body">
         <div class="job-head">
           <h3>Campus Lead, OpenAI Student Collective</h3>
@@ -374,7 +377,7 @@
         </div>
       </div>
       <div class="job club-job">
-        <img class="club-logo" src="assets/ingineering.jpg" alt="INgineering at IU club logo" loading="lazy" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/ingineering.jpg" alt="INgineering at IU club logo" loading="lazy" />
         <div class="club-body">
         <div class="job-head">
           <h3>President, Ingineering Club</h3>
@@ -388,7 +391,7 @@
         </div>
       </div>
       <div class="job club-job">
-        <img class="club-logo" src="assets/cyberclub.jpeg" alt="IU Cybersecurity Club logo" loading="lazy" onerror="this.style.display='none'" />
+        <img class="club-logo" src="assets/cyberclub.jpeg" alt="IU Cybersecurity Club logo" loading="lazy" />
         <div class="club-body">
         <div class="job-head">
           <h3>Member, Cybersecurity Club</h3>

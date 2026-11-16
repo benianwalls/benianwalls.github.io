@@ -103,6 +103,22 @@ body.pointing #gl { cursor: pointer; }
 .lm-tag:hover .lm-label { background: var(--ink); color: #fff; transform: translateY(-2px); }
 .lm-tag:hover .lm-label .ico { color: var(--orange); }
 .lm-tag:hover .lm-go { transform: translateX(3px); }
+/* the stop you are at: a bigger, orange "View …" button, with one soft ring to draw the eye */
+.lm-verb { display: none; }
+.lm-tag.near .lm-verb { display: inline; }
+.lm-tag.near .lm-label { font-size: 0.92rem; padding: 10px 14px; background: var(--orange); color: var(--ink); }
+.lm-tag.near .lm-label .ico { color: var(--ink); }
+.lm-tag.near .lm-label::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 rgba(255, 122, 61, 0.55);
+  animation: tag-ring 1.6s ease-out 3;
+}
+@keyframes tag-ring { to { box-shadow: 0 0 0 16px rgba(255, 122, 61, 0); } }
+.lm-tag.near:hover .lm-label { background: var(--ink); color: #fff; }
+.lm-tag.near:hover .lm-label .ico { color: var(--orange); }
 body.hacked .lm-label { background: #04140c; color: #7dffb0; box-shadow: 0 0 0 1px rgba(0, 255, 140, 0.35); }
 body.hacked .lm-label .ico { color: #41ff9a; }
 
@@ -435,6 +451,7 @@ body.riding .scroll-hint { opacity: 0; transform: translateY(10px); pointer-even
   border: 1px solid var(--line);
   flex-shrink: 0;
 }
+.logo-full { padding: 0; object-fit: cover; }
 .logo-tile { display: grid; place-items: center; background: var(--ink); color: var(--orange); border-color: var(--ink); }
 .logo-tile .ico { width: 26px; height: 26px; }
 
@@ -611,6 +628,7 @@ body.touring .popup-panel { animation: popup-in 0.9s cubic-bezier(0.2, 0.8, 0.3,
   box-shadow: var(--shadow), 0 0 0 1px rgba(20, 35, 26, 0.08);
 }
 #hud .ico { color: #c98a12; }
+#hud:not(.found) { display: none; }
 #hud.bump { animation: hud-bump 0.35s ease; }
 @keyframes hud-bump {
   40% { transform: scale(1.12); }
@@ -918,6 +936,6 @@ body.hacked .coach-link { color: #41ff9a; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .scroll-cta .chev, .hero-inner > *, .coach-typing span, .loader-wheel { animation: none; }
+  .scroll-cta .chev, .hero-inner > *, .coach-typing span, .loader-wheel, .lm-tag.near .lm-label::before { animation: none; }
   .scroll-cta .chev { opacity: 0.7; }
 }

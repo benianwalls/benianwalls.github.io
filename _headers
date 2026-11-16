@@ -1,0 +1,8 @@
+# Security headers. GitHub Pages ignores this file; Cloudflare Pages applies it.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-bgMiZ5XudRc3ON+iOP7TJVjZSb2mE636fa8zgcfI2dE=' https://static.cloudflareinsights.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com https://*.workers.dev; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'

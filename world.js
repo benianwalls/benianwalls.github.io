@@ -841,11 +841,12 @@ export async function createWorld({ canvas, quality }) {
         plane.rotation.set(0, 0, 0);
         plane.scale.setScalar(back);
       } else if (u < 7.5) {
-        const climb = Math.max(0, u - 2.1);
+        // lifts off early and banks away from the trail, well clear of the next building
+        const climb = Math.max(0, u - 1.8);
         plane.visible = true;
         plane.scale.setScalar(1);
-        plane.position.set(PARK.x + 3.4 * u * u, PARK.y + 1.9 * climb * climb, R.z - climb * climb * 0.5);
-        plane.rotation.set(0, 0, smooth(1.7, 2.9, u) * 0.3);
+        plane.position.set(PARK.x + 3.4 * u * u, PARK.y + 2.9 * climb * climb, R.z - 2.2 * climb * climb);
+        plane.rotation.set(-smooth(0, 1.6, climb) * 0.4, Math.atan2(4.4 * climb, 6.8 * u + 0.01), smooth(1.5, 2.6, u) * 0.3, "YZX");
       } else plane.visible = false;
     });
     return 5.2; // label sits over the terminal, not the tower
@@ -1767,9 +1768,10 @@ export async function createWorld({ canvas, quality }) {
   const moments = {}; // landmark id -> world time its moment last started
   const state = { night: 0, glow: 0, dt: 0, openId: null, since: (id) => time - (moments[id] ?? -1e9) };
   let motionOk = true;
-  function activate(id) {
+  /* arrival won't restart a moment that is still playing; a click replays it */
+  function activate(id, replay = false) {
     if (!motionOk || !landmarks[id]) return;
-    if (state.since(id) > 6) moments[id] = time; // don't restart one that's still playing
+    if (state.since(id) > (replay ? 2 : 9)) moments[id] = time;
   }
   let hopY = 0, hopV = 0, wasAirborne = false;
   let introT = 0;
@@ -1917,9 +1919,11 @@ export async function createWorld({ canvas, quality }) {
 
     // arriving beside a building wakes it up
     for (const [i, id] of SECTION_IDS.entries()) {
-      const near = Math.abs(s - (lmX(i) - LM_AHEAD)) < 4;
+      const gap = Math.abs(s - (lmX(i) - LM_AHEAD));
+      const near = gap < 4;
       if (near && !landmarks[id].near && introT >= 1) activate(id);
       landmarks[id].near = near;
+      landmarks[id].close = gap < 11;
     }
 
     /* --- camera --- */
@@ -1988,7 +1992,12 @@ export async function createWorld({ canvas, quality }) {
         projected.copy(lm.anchor).project(camera);
         const visible = projected.z < 1 && Math.abs(projected.x) < 1.3 && projected.y > -1.2 && projected.y < 3;
         const dist = camera.position.distanceTo(lm.anchor);
-        const fade = visible ? 1 - smooth(70, 110, dist) : 0;
+        const fade = visible ? 1 - smooth(48, 80, dist) : 0;
+        // beside its building the tag grows into a clear "View …" button
+        if (el.classList.contains("near") !== !!lm.close) {
+          el.classList.toggle("near", !!lm.close);
+          lm.labelHalf = undefined;
+        }
         if (fade <= 0.01) {
           if (el.style.visibility !== "hidden") el.style.visibility = "hidden";
           continue;

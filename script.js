@@ -9,6 +9,11 @@ import { icon, mountIcons } from "./icons.js";
 
 mountIcons();
 
+/* a missing image hides itself (and its caption) instead of showing a broken icon */
+for (const img of document.images) {
+  img.addEventListener("error", () => { (img.closest(".photo") ?? img).style.display = "none"; });
+}
+
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const isTouch = window.matchMedia("(hover: none)").matches;
 const TAP_WORD = isTouch ? "tap" : "click";
@@ -65,7 +70,7 @@ for (const id of SECTION_IDS) {
   b.dataset.id = id;
   b.setAttribute("aria-label", `Open ${id} details`);
   b.title = `${TAP_WORD === "tap" ? "Tap" : "Click"} to open`;
-  b.innerHTML = `<span class="lm-label">${icon(LM_LABELS[id][0])}${LM_LABELS[id][1]}${icon("arrow", "lm-go")}</span>`;
+  b.innerHTML = `<span class="lm-label">${icon(LM_LABELS[id][0])}<span><span class="lm-verb">View </span>${LM_LABELS[id][1]}</span>${icon("arrow", "lm-go")}</span>`;
   b.style.visibility = "hidden";
   // tabbing to an off-screen building rides the trail to it
   b.addEventListener("focus", () => {
@@ -87,7 +92,7 @@ function openPopup(id) {
   if (!p) return;
   p.classList.add("open");
   openId = id;
-  world?.activate(id); // the building comes alive behind its card
+  world?.activate(id, true); // the building comes alive behind its card
   document.body.style.overflow = "hidden";
   lastFocused = document.activeElement;
   p.querySelector(".popup-close")?.focus({ preventScroll: true });
@@ -195,6 +200,7 @@ function collectBadge(id, e) {
   setTimeout(() => f.remove(), 950);
 
   badgeCount.textContent = collected.size;
+  hud.classList.add("found"); // the counter only appears once there is something to count
   replay(hud, "bump");
 
   if (collected.size === BADGE_TOTAL) {
