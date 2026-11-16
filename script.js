@@ -98,6 +98,8 @@ function openPopup(id) {
   p.classList.add("open");
   p.querySelector(".popup-panel").scrollTop = 0;
   openId = id;
+  // the address bar follows the open stop, so the link can be copied and shared
+  if (LM_LABELS[id]) history.replaceState(null, "", "#" + id);
   world?.activate(id, true); // the building comes alive behind its card
   document.body.style.overflow = "hidden";
   p.querySelector(".popup-close")?.focus({ preventScroll: true });
@@ -131,6 +133,7 @@ SECTION_IDS.forEach((id, i) => {
 function closePopups() {
   document.querySelectorAll(".popup.open").forEach((p) => p.classList.remove("open"));
   openId = null;
+  if (location.hash) history.replaceState(null, "", location.pathname + location.search);
   document.body.style.overflow = "";
   if (lastFocused?.focus) lastFocused.focus({ preventScroll: true });
   lastFocused = null;
@@ -532,6 +535,8 @@ window.addEventListener("touchmove", (e) => {
    ===================================================== */
 
 let last = performance.now();
+const themeMeta = document.querySelector('meta[name="theme-color"]');
+let lastSky = "";
 let slowFrames = 0, sampled = 0, degraded = false, prevNow = performance.now();
 
 function frame(now) {
@@ -542,7 +547,9 @@ function frame(now) {
   if (Math.abs(current - target) < 0.05) current = target;
   const progress = clamp(current / maxScroll, 0, 1);
 
-  const { night } = world.frame({ progress, dt, popupId: openId, reducedMotion, labels: labelEls });
+  const { night, sky } = world.frame({ progress, dt, popupId: openId, reducedMotion, labels: labelEls });
+  // phone browsers tint their toolbar with the page's theme colour: keep it matched to the sky
+  if (sky !== lastSky) { lastSky = sky; themeMeta?.setAttribute("content", "#" + sky); }
   document.body.classList.toggle("night", night > 0.5);
 
   els.progress.style.width = (progress * 100).toFixed(2) + "%";

@@ -1,0 +1,10 @@
+/* the 404 page: one card on the sky gradient */
+body.lost {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 6vw;
+  background: linear-gradient(to bottom, #8ecae6 0%, #bde3f0 55%, #ffd9a0 100%);
+}
+.lost-card { pointer-events: auto; max-width: 520px; }
+.lost-card .btn { margin-top: 1.4rem; }

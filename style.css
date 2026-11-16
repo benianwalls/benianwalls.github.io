@@ -353,6 +353,11 @@ body.hacked .hero::before { background: linear-gradient(90deg, rgba(2, 8, 5, 0.8
 /* the headline clears out of the way once the ride begins */
 .hero-inner, .hero::before { transition: opacity 0.45s ease; }
 body.riding .hero-inner, body.riding .hero::before { opacity: 0; pointer-events: none; }
+.hint-touch { display: none; }
+@media (hover: none) {
+  .hint-mouse { display: none; }
+  .hint-touch { display: inline; }
+}
 /* fade the hint once the ride begins */
 body.riding .scroll-hint { opacity: 0; transform: translateY(10px); pointer-events: none; }
 .scroll-cta {
@@ -1067,7 +1072,7 @@ body.hacked .coach-link { color: #41ff9a; }
   .lm-label { font-size: 0.74rem; padding: 6px 9px; }
   .proof { font-size: 0.88rem; }
   .btn { font-size: 0.9rem; padding: 0.8rem 1rem; }
-  .scroll-hint { display: none; }
+  .scroll-hint { margin-top: 1.4rem; font-size: 0.82rem; }
   .about-flex { flex-direction: column; }
   .quick-head { align-items: flex-start; }
   .quick-head .portrait { width: 64px; height: 64px; }

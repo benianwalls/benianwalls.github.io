@@ -1611,11 +1611,11 @@ export async function createWorld({ canvas, quality }) {
   dust.frustumCulled = false;
   scene.add(dust);
   let dustNext = 0;
-  function emitDust(at, n, power) {
+  function emitDust(at, n, power, dir = 1) {
     for (let i = 0; i < n; i++) {
       const j = dustNext; dustNext = (dustNext + 1) % DUST_N;
       dustPos.set([at.x + (Math.random() - 0.5) * 0.3, at.y + 0.05, at.z + (Math.random() - 0.5) * 0.5], j * 3);
-      dustVel[j].set(-0.6 - Math.random() * 1.2 * power, 0.5 + Math.random() * 0.9 * power, (Math.random() - 0.5) * 0.8);
+      dustVel[j].set((-0.6 - Math.random() * 1.2 * power) * dir, 0.5 + Math.random() * 0.9 * power, (Math.random() - 0.5) * 0.8);
       dustLife[j] = 1;
       dustS[j] = 0.25 + Math.random() * 0.35;
     }
@@ -1878,6 +1878,8 @@ export async function createWorld({ canvas, quality }) {
   }
   let hopY = 0, hopV = 0, wasAirborne = false;
   let seat = 0; // 0 riding ... 1 sitting on the overlook bench
+  let off = 0;  // 0 rider on the bike, 1 the walking figure has taken over
+  let facing = 1, turned = 0, odo = 0; // which way the bike points; how far it has rolled
   let introT = 0;
   let lastS = 0;
   let time = 0;
@@ -1908,10 +1910,21 @@ export async function createWorld({ canvas, quality }) {
     /* --- rider on the trail --- */
     const by = trailY(s) + 0.05;
     bike.group.position.set(s, by, trailZ(s));
-    bike.group.rotation.set(0, -Math.atan(trailSlopeZ(s)), Math.atan(trailSlopeY(s)), "YZX");
-    const wheelA = -s / 0.35;
-    for (const w of bike.wheels) w.rotation.z = wheelA;
-    bike.setCrank(s / (0.35 * 2.1) + (reducedMotion ? 0 : time * 0.6 * (1 - smooth(0.3, 2, Math.abs(speed)))));
+    // riding back down the trail turns the bike round to face the way it is going
+    if (speed < -1.2) facing = -1;
+    else if (speed > 0.6 || (progress < 0.01 && Math.abs(speed) < 0.3)) facing = 1;
+    if (introT < 1) facing = 1;
+    turned = reducedMotion ? +(facing < 0) : damp(turned, facing < 0 ? 1 : 0, 8, dt);
+    const heading = turned < 0.5 ? 1 : -1;
+    odo += speed * dt * heading; // distance rolled in the bike's own forward direction
+    bike.group.rotation.set(
+      Math.sin(turned * Math.PI) * 0.28,                             // leans through the turn
+      -Math.atan(trailSlopeZ(s)) + turned * Math.PI,
+      Math.atan(trailSlopeY(s)) * Math.cos(turned * Math.PI),
+      "YZX"
+    );
+    for (const w of bike.wheels) w.rotation.z = -odo / 0.35;
+    bike.setCrank(odo / (0.35 * 2.1)); // the cranks only turn when the wheels do
 
     if (hopV !== 0 || hopY > 0) {
       hopY += hopV * dt;
@@ -1927,8 +1940,8 @@ export async function createWorld({ canvas, quality }) {
 
     // dust from the rear wheel
     if (Math.abs(speed) > 1.2 && Math.random() < Math.min(1, Math.abs(speed) * 0.08)) {
-      tmpA.set(s - 0.75, by, trailZ(s - 0.75));
-      emitDust(tmpA, 1, clamp(Math.abs(speed) / 8, 0.3, 1.5));
+      tmpA.set(s - 0.75 * heading, by, trailZ(s - 0.75 * heading));
+      emitDust(tmpA, 1, clamp(Math.abs(speed) / 8, 0.3, 1.5), heading);
     }
     for (let i = 0; i < DUST_N; i++) {
       if (dustLife[i] <= 0) { dustA[i] = 0; continue; }
@@ -2029,19 +2042,24 @@ export async function createWorld({ canvas, quality }) {
     }
 
     // at the overlook the rider steps off, walks to the bench, turns and sits;
-    // the bike rests on its stand. `seat` runs 0 -> 1 through that whole sequence
-    // (and back again if the visitor scrolls away).
+    // the bike rests on its stand. `seat` runs 0 -> 1 through that whole sequence.
+    // Leaving is not played in reverse: he is simply back on the bike.
     const wantSeat = progress > 0.997 && Math.abs(speed) < 0.5;
-    seat = reducedMotion ? +wantSeat : clamp(seat + (wantSeat ? dt / 3 : -dt / 1.6), 0, 1);
-    const off = smooth(0, 0.1, seat); // rider on the bike <-> figure beside it
+    if (wantSeat) {
+      seat = reducedMotion ? 1 : Math.min(1, seat + dt / 3);
+      off = smooth(0, 0.1, seat); // rider on the bike <-> figure beside it
+    } else {
+      off = reducedMotion ? 0 : damp(off, 0, 16, dt);
+      if (off < 0.02) { off = 0; seat = 0; }
+    }
     if (bike.rider.root) {
       bike.rider.root.visible = off < 0.98;
       bike.rider.root.scale.setScalar(1 - off);
     }
-    bike.pivot.rotation.x = smooth(0, 0.15, seat) * 0.2;
+    bike.pivot.rotation.x = smooth(0, 0.15, seat) * 0.2 * Math.min(1, off * 4);
     headlight.intensity *= 1 - off;
     bike.lampMat.emissiveIntensity *= 1 - off;
-    walker.group.visible = seat > 0.004;
+    walker.group.visible = off > 0.004;
     if (walker.group.visible) {
       const start = tmpA.set(bike.group.position.x + 0.35, bike.group.position.y, bike.group.position.z - 0.75);
       const walk = clamp((seat - 0.1) / 0.5, 0, 1);       // to the front of the bench
@@ -2069,7 +2087,7 @@ export async function createWorld({ canvas, quality }) {
 
     // chase: off the near side, looking a little ahead
     tmpA.set(B.x - 3.4 * pull, B.y + 3.6 + (pull - 1) * 2, B.z + 13 * pull);
-    tmpB.set(B.x + (portrait ? 2 : 4.6), B.y + 2.0, B.z - 4);
+    tmpB.set(B.x + (portrait ? 2 : 4.6) * (1 - turned * 0.75), B.y + 2.0, B.z - 4);
 
     // hero: a low, slow three-quarter orbit of the rider
     const orbit = reducedMotion ? 0 : Math.sin(time * 0.13) * 0.16;
@@ -2097,8 +2115,9 @@ export async function createWorld({ canvas, quality }) {
     // finale: past the arch the camera lifts and turns to look back down the valley
     const finale = smooth(0.955, 1, progress) * (1 - smooth(0, 1, focus));
     if (finale > 0.001) {
-      tmpA.set(B.x + 10 * pull, B.y + 8.5 + (pull - 1) * 4, B.z + 21 * pull);
-      tmpB.set(B.x - 24, B.y + 3.5, B.z - 9);
+      // framed so the bench (and whoever is on it) sits clear of the closing card
+      tmpA.set(B.x + 10 * pull, B.y + 6.5 + (pull - 1) * 4, B.z + 18 * pull);
+      tmpB.set(B.x - 7, B.y + 1.8, B.z - 6.5);
       camPos.lerp(tmpA, finale);
       camLook.lerp(tmpB, finale);
     }
@@ -2160,7 +2179,7 @@ export async function createWorld({ canvas, quality }) {
     if (composer) composer.render();
     else renderer.render(scene, camera);
 
-    return { speed, night };
+    return { speed, night, sky: pal.top.getHexString() };
   }
 
   window.addEventListener("pointermove", (e) => {
