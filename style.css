@@ -605,8 +605,12 @@ body.touring .popup-panel { animation: popup-in 0.9s cubic-bezier(0.2, 0.8, 0.3,
 }
 .popup:not(#popup-quick) .card { max-width: none; margin: 0; text-align: left; }
 @media (min-width: 1000px) {
-  .popup:not(#popup-quick) { justify-content: flex-end; align-items: stretch; }
+  /* the scene beside the panel stays clickable (another building switches to it) */
+  .popup:not(#popup-quick) { justify-content: flex-end; align-items: stretch; pointer-events: none; }
   .popup:not(#popup-quick) .card {
+    pointer-events: auto;
+    --pad-x: 2.2rem;
+    --pad-b: 3rem;
     width: min(520px, 42vw);
     height: 100vh;
     height: 100dvh;
@@ -624,6 +628,8 @@ body.touring .popup-panel { animation: popup-in 0.9s cubic-bezier(0.2, 0.8, 0.3,
     max-height: 58vh;
     max-height: 58dvh;
     border-radius: 18px 18px 0 0;
+    --pad-x: 1.3rem;
+    --pad-b: 2.2rem;
     padding: 1.6rem 1.3rem 2.2rem;
     box-shadow: 0 -14px 44px rgba(0, 0, 0, 0.3);
     animation-name: sheet-in;
@@ -632,6 +638,7 @@ body.touring .popup-panel { animation: popup-in 0.9s cubic-bezier(0.2, 0.8, 0.3,
   .popup:not(#popup-quick) .card::before {
     content: "";
     display: block;
+    flex: none;
     width: 40px; height: 4px;
     margin: -0.7rem auto 0.9rem;
     border-radius: 2px;
@@ -647,6 +654,89 @@ body.touring .popup-panel { animation: popup-in 0.9s cubic-bezier(0.2, 0.8, 0.3,
   to { transform: translateY(0); }
 }
 body.touring .popup:not(#popup-quick) .popup-panel { animation-duration: 0.5s; }
+/* switching between stops: the panel stays put and its content cross-fades */
+.popup.swap:not(#popup-quick) .popup-panel { animation: none; }
+.popup.swap:not(#popup-quick) .popup-panel > * { animation: swap-in 0.35s ease both; }
+.popup.swap:not(#popup-quick) .popup-panel > .card-nav { animation: none; }
+@keyframes swap-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.popup:not(#popup-quick) .card { display: flex; flex-direction: column; }
+.popup:not(#popup-quick) .card > * { flex: none; }
+.popup-panel > :nth-last-child(2) { margin-bottom: 2rem; }
+/* previous / next, pinned to the foot of the panel */
+.card-nav {
+  position: sticky;
+  bottom: calc(-1 * var(--pad-b, 2.2rem)); /* flush with the panel's bottom edge, past its padding */
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin: auto calc(-1 * var(--pad-x, 1.3rem)) calc(-1 * var(--pad-b, 2.2rem)); /* auto: sits at the foot even when the card is short */
+  padding: 0.7rem var(--pad-x, 1.3rem);
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+}
+.card-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: none;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.card-nav-btn.next { justify-content: flex-end; text-align: right; }
+.card-nav-btn small { display: block; font-family: var(--mono); font-size: 0.62rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.card-nav-btn:hover { background: var(--paper-2); border-color: var(--line); }
+.card-nav-btn .ico { color: var(--orange-ink); }
+body.hacked .card-nav { background: #04140c; border-color: rgba(0, 255, 140, 0.2); }
+body.hacked .card-nav-btn { color: #7dffb0; }
+body.hacked .card-nav-btn:hover { background: #052a18; border-color: #16623a; }
+
+/* ---- PROTOTYPE (add ?panel=soft to the URL): the panel melts into the scene ----
+   a feathered, frosted leading edge instead of a hard line, and content that
+   settles in just after the panel does */
+@media (min-width: 1000px) {
+  body.soft-panels .popup:not(#popup-quick) .card {
+    width: min(600px, 47vw);
+    padding-left: calc(2.2rem + 80px);
+    background: linear-gradient(90deg, rgba(251, 250, 246, 0) 0, rgba(251, 250, 246, 0.9) 80px, var(--paper) 150px);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 80px);
+    mask-image: linear-gradient(90deg, transparent 0, #000 80px);
+    box-shadow: none;
+    animation: soft-in 0.5s ease both;
+  }
+  body.soft-panels .card-nav { margin-left: -2.2rem; padding-left: 2.2rem; }
+}
+@media (max-width: 999px) {
+  body.soft-panels .popup:not(#popup-quick) .card {
+    border-radius: 0;
+    padding-top: calc(1.6rem + 44px);
+    background: linear-gradient(180deg, rgba(251, 250, 246, 0) 0, rgba(251, 250, 246, 0.92) 44px, var(--paper) 90px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 44px);
+    mask-image: linear-gradient(180deg, transparent 0, #000 44px);
+    box-shadow: none;
+    animation: soft-in 0.5s ease both;
+  }
+  body.soft-panels .popup:not(#popup-quick) .card::before { display: none; }
+}
+body.soft-panels .popup:not(#popup-quick):not(.swap) .popup-panel > * { animation: swap-in 0.45s ease 0.12s both; }
+body.soft-panels .popup:not(#popup-quick) .popup-panel > .card-nav { animation: none; }
+body.soft-panels .card-nav { border-top: 0; padding-top: 1.6rem; background: linear-gradient(to top, var(--paper) 62%, rgba(251, 250, 246, 0)); }
+@keyframes soft-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* ============ CLICKABLE WORLD ============ */
 /* coin counter */

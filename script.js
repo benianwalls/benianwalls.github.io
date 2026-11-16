@@ -9,6 +9,9 @@ import { icon, mountIcons } from "./icons.js";
 
 mountIcons();
 
+// design prototype switch: ?panel=soft previews the feathered card style
+if (new URLSearchParams(location.search).get("panel") === "soft") document.body.classList.add("soft-panels");
+
 /* a missing image hides itself (and its caption) instead of showing a broken icon */
 for (const img of document.images) {
   img.addEventListener("error", () => { (img.closest(".photo") ?? img).style.display = "none"; });
@@ -90,13 +93,43 @@ let openId = null;
 function openPopup(id) {
   const p = document.getElementById("popup-" + id);
   if (!p) return;
+  // opening one card while another is up swaps them in place (no second slide-in)
+  const others = [...document.querySelectorAll(".popup.open")].filter((o) => o !== p);
+  others.forEach((o) => o.classList.remove("open"));
+  p.classList.toggle("swap", others.length > 0);
+  if (!others.length) lastFocused = document.activeElement;
   p.classList.add("open");
+  p.querySelector(".popup-panel").scrollTop = 0;
   openId = id;
   world?.activate(id, true); // the building comes alive behind its card
   document.body.style.overflow = "hidden";
-  lastFocused = document.activeElement;
   p.querySelector(".popup-close")?.focus({ preventScroll: true });
 }
+
+/* ride to a stop and open its card (used by the card's previous/next buttons
+   and by clicking another building while a card is open) */
+function goTo(id) {
+  scrollToSection(id);
+  openPopup(id);
+}
+
+/* previous / next at the foot of every stop's card */
+SECTION_IDS.forEach((id, i) => {
+  const panel = document.querySelector(`#popup-${id} .popup-panel`);
+  if (!panel) return;
+  const nav = document.createElement("nav");
+  nav.className = "card-nav";
+  nav.setAttribute("aria-label", "Other sections");
+  const link = (j, dir) => {
+    if (j < 0 || j >= SECTION_IDS.length) return "<span></span>";
+    const name = LM_LABELS[SECTION_IDS[j]][1];
+    return dir < 0
+      ? `<button class="card-nav-btn" data-go="${SECTION_IDS[j]}">${icon("back")}<span><small>Previous</small>${name}</span></button>`
+      : `<button class="card-nav-btn next" data-go="${SECTION_IDS[j]}"><span><small>Next</small>${name}</span>${icon("arrow")}</button>`;
+  };
+  nav.innerHTML = link(i - 1, -1) + link(i + 1, 1);
+  panel.appendChild(nav);
+});
 
 function closePopups() {
   document.querySelectorAll(".popup.open").forEach((p) => p.classList.remove("open"));
@@ -135,6 +168,13 @@ const SCROLL_STEP = () => window.innerHeight * 0.15;
 
 window.addEventListener("keydown", (e) => {
   if (e.key === "Escape") return closePopups();
+  // with a stop's card open, the arrow keys step through the stops
+  const at = SECTION_IDS.indexOf(openId);
+  if (at >= 0 && (e.key === "ArrowRight" || e.key === "ArrowLeft") && !e.target.closest?.("input, textarea")) {
+    const next = SECTION_IDS[at + (e.key === "ArrowRight" ? 1 : -1)];
+    if (next) { e.preventDefault(); goTo(next); }
+    return;
+  }
   if (!canScrollPage()) return;
 
   let delta = 0;
@@ -166,11 +206,19 @@ document.addEventListener("click", (e) => {
   if (e.target.closest(".popup-close")) return closePopups();
   if (e.target.classList && e.target.classList.contains("popup")) return closePopups();
 
+  const go = e.target.closest("[data-go]");
+  if (go) return goTo(go.dataset.go);
+
   const tag = e.target.closest(".lm-tag");
   if (tag) return openPopup(tag.dataset.id);
 
   if (e.target !== els.canvas || !world) return;
   const hit = world.pick(e.clientX, e.clientY);
+  if (openId) {
+    // a card is open beside the scene: another building switches to it, anywhere else closes
+    if (hit?.type === "landmark") return hit.id === openId ? world.activate(hit.id, true) : goTo(hit.id);
+    return closePopups();
+  }
   if (!hit) return;
   if (hit.type === "landmark") return openPopup(hit.id);
   if (hit.type === "badge") return collectBadge(hit.id, e);
@@ -432,7 +480,7 @@ let endTimer = 0, finishShown = false;
 function updateEnding(progress, dt) {
   if (progress > 0.995) {
     endTimer += dt;
-    if (endTimer > 1.3 && !finishShown && !openId) {
+    if (endTimer > 2.2 && !finishShown && !openId) {
       finishShown = true;
       document.getElementById("finish-coins").textContent = collected.size
         ? `Seven stops, and ${collected.size} of ${BADGE_TOTAL} coins found.`

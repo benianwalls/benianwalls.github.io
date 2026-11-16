@@ -1282,11 +1282,12 @@ export async function createWorld({ canvas, quality }) {
     box(ov, 2.2, 0.5, 0.1, "#8a6a48", 0, 0.75, -0.28);
     for (const x of [-0.9, 0.9]) box(ov, 0.12, 0.5, 0.5, "#5a4330", x, 0, 0);
     lamp(ov, -1.8, -0.1);
-    seated = buildSeatedRider();
-    seated.position.set(0.25, 0, 0.02);
-    seated.visible = false;
-    ov.add(seated);
     scene.add(ov);
+    ov.updateMatrixWorld(true);
+    walker = buildWalker();
+    BENCH.yaw = ov.rotation.y;
+    BENCH.seat.copy(ov.localToWorld(new THREE.Vector3(0.25, 0, 0.02)));
+    BENCH.front.copy(ov.localToWorld(new THREE.Vector3(0.25, 0, 0.5)));
 
     const ax = TRAIL_LEN + 11;
     const g = new THREE.Group();
@@ -1478,52 +1479,84 @@ export async function createWorld({ canvas, quality }) {
     return { group, pivot, body, wheels, setCrank, lampMat, lampPos: lampHead.position, rider };
   }
 
-  /* the same rider, off the bike: sitting on the overlook bench at the end */
-  let seated = null;
-  function buildSeatedRider() {
+  /* the same rider, off the bike: a small jointed figure that can stand, walk
+     and sit. pose(sit, phase, stride): sit goes 0 standing -> 1 seated, and
+     phase/stride drive the walk cycle. It faces +z. */
+  let walker = null;
+  const BENCH = { seat: new THREE.Vector3(), front: new THREE.Vector3(), yaw: 0 }; // where the walker ends up
+  function buildWalker() {
     const skin = mat("#9c6644", { flatShading: false, roughness: 0.7 });
     const jersey = mat("#2563a8", { flatShading: false, roughness: 0.75 });
     const shorts = mat("#1f2a36", { flatShading: false, roughness: 0.8 });
     const dark = mat("#1c1f24");
-    const V = (x, y, z) => new THREE.Vector3(x, y, z);
     const g = new THREE.Group();
-    const R = new THREE.Group(); // modelled at rider scale, facing +z, seat height 0.62
+    const R = new THREE.Group(); // modelled at rider scale
     R.scale.setScalar(1.25);
     g.add(R);
-    const ball = (r, m, p) => { const b = shadowed(new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), m)); b.position.copy(p); R.add(b); return b; };
+    const limb = (r, m, seg = 10) => tube(R, r, m, null, null, seg);
+    const ball = (r, m) => { const b = shadowed(new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), m)); R.add(b); return b; };
 
-    const hip = V(0, 0.6, 0), chest = V(0, 1.12, 0.1);
-    tube(R, 0.13, jersey, hip, chest, 12);
-    ball(0.13, jersey, hip); ball(0.13, jersey, chest);
-    const pack = shadowed(new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.34, 0.1), mat("#2d3436")));
-    pack.position.set(0, 0.9, -0.1);
-    pack.rotation.x = 0.18;
-    R.add(pack);
-    const headC = V(0, 1.33, 0.15);
-    tube(R, 0.05, skin, V(0, 1.16, 0.11), headC, 8);
-    ball(0.11, skin, headC);
+    const torso = limb(0.13, jersey, 12), hipB = ball(0.13, jersey), chestB = ball(0.13, jersey);
+    const neck = limb(0.05, skin, 8), head = ball(0.11, skin);
     const helmet = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.128, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat("#ff7a3d", { flatShading: false, roughness: 0.4, metalness: 0.1 })));
-    helmet.position.set(0, 1.345, 0.14);
-    helmet.rotation.x = 0.25;
+    helmet.rotation.x = 0.2;
     helmet.scale.set(1, 1, 1.12);
     R.add(helmet);
-    for (const side of [1, -1]) {
-      // legs: thighs along the seat, shins down, feet on the ground
-      const h = V(0.1 * side, 0.6, 0.02), knee = V(0.13 * side, 0.56, 0.46), ankle = V(0.14 * side, 0.1, 0.52);
-      tube(R, 0.07, shorts, h, knee, 10);
-      tube(R, 0.052, skin, knee, ankle, 10);
-      ball(0.06, skin, knee);
+    const pack = shadowed(new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.34, 0.1), mat("#2d3436")));
+    R.add(pack);
+    const legs = [1, -1].map((side) => {
       const shoe = shadowed(new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.21), dark));
-      shoe.position.set(0.14 * side, 0.045, 0.56);
       R.add(shoe);
-      // arms: forearms resting on the knees
-      const sh = V(0.17 * side, 1.1, 0.1), elbow = V(0.22 * side, 0.82, 0.22), hand = V(0.13 * side, 0.64, 0.42);
-      tube(R, 0.055, jersey, sh, sh.clone().lerp(elbow, 0.6), 8);
-      tube(R, 0.045, skin, sh.clone().lerp(elbow, 0.55), elbow, 8);
-      tube(R, 0.04, skin, elbow, hand, 8);
-      ball(0.045, dark, hand);
+      return { side, thigh: limb(0.07, shorts), shin: limb(0.052, skin), knee: ball(0.06, skin), shoe };
+    });
+    const arms = [1, -1].map((side) => ({ side, upper: limb(0.055, jersey, 8), fore: limb(0.042, skin, 8), hand: ball(0.045, dark) }));
+
+    const hip = new THREE.Vector3(), chest = new THREE.Vector3(), headC = new THREE.Vector3();
+    const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), d = new THREE.Vector3();
+    function pose(sit, phase, stride) {
+      const L = (stand, seat) => stand + (seat - stand) * sit;
+      hip.set(0, L(0.95, 0.6), 0);
+      chest.set(0, L(1.47, 1.12), L(0.04, 0.1));
+      placeBetween(torso, hip, chest);
+      hipB.position.copy(hip);
+      chestB.position.copy(chest);
+      headC.set(0, chest.y + 0.21, chest.z + 0.05);
+      placeBetween(neck, a.copy(chest).setY(chest.y + 0.04), headC);
+      head.position.copy(headC);
+      helmet.position.set(0, headC.y + 0.015, headC.z - 0.01);
+      pack.position.set(0, (hip.y + chest.y) / 2 + 0.04, (hip.z + chest.z) / 2 - 0.15);
+      pack.rotation.x = L(0.08, 0.18);
+
+      for (const leg of legs) {
+        const ph = phase + (leg.side > 0 ? 0 : Math.PI);
+        const swing = Math.sin(ph) * stride;                               // thigh angle
+        const flex = (0.5 - 0.5 * Math.cos(ph + 0.9)) * stride * 1.2;      // knee bends as the leg swings through
+        a.set(0.1 * leg.side, hip.y, L(0, 0.02));                          // hip joint
+        b.set(a.x, a.y - 0.46 * Math.cos(swing), 0.46 * Math.sin(swing));  // knee, standing
+        c.set(b.x, b.y - 0.45 * Math.cos(swing - flex), b.z + 0.45 * Math.sin(swing - flex)); // ankle, standing
+        b.lerp(d.set(0.13 * leg.side, 0.56, 0.46), sit);
+        c.lerp(d.set(0.14 * leg.side, 0.1, 0.52), sit);
+        placeBetween(leg.thigh, a, b);
+        placeBetween(leg.shin, b, c);
+        leg.knee.position.copy(b);
+        leg.shoe.position.set(c.x, c.y - 0.01, c.z + 0.06);
+      }
+      for (const arm of arms) {
+        const swing = -Math.sin(phase + (arm.side > 0 ? 0 : Math.PI)) * stride * 0.8;
+        a.set(0.17 * arm.side, chest.y - 0.02, chest.z);                   // shoulder
+        b.set(a.x + 0.03 * arm.side, a.y - 0.27 * Math.cos(swing), a.z + 0.27 * Math.sin(swing)); // elbow, standing
+        c.set(b.x, b.y - 0.25 * Math.cos(swing + 0.25), b.z + 0.25 * Math.sin(swing + 0.25));     // hand, standing
+        b.lerp(d.set(0.22 * arm.side, 0.82, 0.22), sit);
+        c.lerp(d.set(0.13 * arm.side, 0.64, 0.42), sit);                   // forearms rest on the knees
+        placeBetween(arm.upper, a, b);
+        placeBetween(arm.fore, b, c);
+        arm.hand.position.copy(c);
+      }
     }
-    return g;
+    pose(0, 0, 0);
+    g.visible = false;
+    scene.add(g);
+    return { group: g, pose };
   }
 
   /* the hero bike + headlight + hit box */
@@ -1844,7 +1877,7 @@ export async function createWorld({ canvas, quality }) {
     if (state.since(id) > (replay ? 2 : 9)) moments[id] = time;
   }
   let hopY = 0, hopV = 0, wasAirborne = false;
-  let seat = 0; // 0 riding, 1 sitting on the overlook bench
+  let seat = 0; // 0 riding ... 1 sitting on the overlook bench
   let introT = 0;
   let lastS = 0;
   let time = 0;
@@ -1995,20 +2028,37 @@ export async function createWorld({ canvas, quality }) {
       landmarks[id].close = Math.abs(s - (lmX(i) - LM_AHEAD)) < 11;
     }
 
-    // at the overlook the rider gets off and sits on the bench; the bike rests on its stand
-    const wantSeat = progress > 0.997 && Math.abs(speed) < 0.5 ? 1 : 0;
-    const before = seat;
-    seat = reducedMotion ? wantSeat : damp(seat, wantSeat, 7, dt);
-    if ((before < 0.5) !== (seat < 0.5)) emitDust(bike.group.position, 8, 0.8);
+    // at the overlook the rider steps off, walks to the bench, turns and sits;
+    // the bike rests on its stand. `seat` runs 0 -> 1 through that whole sequence
+    // (and back again if the visitor scrolls away).
+    const wantSeat = progress > 0.997 && Math.abs(speed) < 0.5;
+    seat = reducedMotion ? +wantSeat : clamp(seat + (wantSeat ? dt / 3 : -dt / 1.6), 0, 1);
+    const off = smooth(0, 0.1, seat); // rider on the bike <-> figure beside it
     if (bike.rider.root) {
-      bike.rider.root.visible = seat < 0.98;
-      bike.rider.root.scale.setScalar(1 - seat);
+      bike.rider.root.visible = off < 0.98;
+      bike.rider.root.scale.setScalar(1 - off);
     }
-    seated.visible = seat > 0.02;
-    seated.scale.setScalar(seat);
-    bike.pivot.rotation.x = seat * 0.2;
-    headlight.intensity *= 1 - seat;
-    bike.lampMat.emissiveIntensity *= 1 - seat;
+    bike.pivot.rotation.x = smooth(0, 0.15, seat) * 0.2;
+    headlight.intensity *= 1 - off;
+    bike.lampMat.emissiveIntensity *= 1 - off;
+    walker.group.visible = seat > 0.004;
+    if (walker.group.visible) {
+      const start = tmpA.set(bike.group.position.x + 0.35, bike.group.position.y, bike.group.position.z - 0.75);
+      const walk = clamp((seat - 0.1) / 0.5, 0, 1);       // to the front of the bench
+      const turn = smooth(0.6, 0.8, seat);                // turn round and back up to it
+      const sit = smooth(0.78, 1, seat);
+      const pos = walker.group.position;
+      pos.lerpVectors(start, BENCH.front, smooth(0, 1, walk)).lerp(BENCH.seat, smooth(0.62, 0.9, seat));
+      const dist = start.distanceTo(BENCH.front);
+      const stride = 0.5 * smooth(0, 0.15, walk) * (1 - smooth(0.85, 1, walk)) + 0.16 * Math.sin(Math.PI * turn);
+      const phase = walk * dist * 4.6 + turn * 5;
+      pos.y += Math.abs(Math.sin(phase)) * 0.025 * stride;
+      const heading = Math.atan2(BENCH.front.x - start.x, BENCH.front.z - start.z);
+      const delta = ((BENCH.yaw - heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+      walker.group.rotation.y = heading + delta * turn;
+      walker.group.scale.setScalar(off);
+      walker.pose(sit, phase, stride);
+    }
 
     /* --- camera --- */
     const B = bike.group.position;
@@ -2074,7 +2124,7 @@ export async function createWorld({ canvas, quality }) {
     sky.position.copy(camera.position);
 
     /* --- hover (desktop, a few times a second) --- */
-    if (!q.touch && ++hoverFrame % 4 === 0 && !popupId) {
+    if (!q.touch && ++hoverFrame % 4 === 0) {
       const info = pointer.inside ? pick(pointer.cx, pointer.cy) : null;
       setHover(info);
     }
