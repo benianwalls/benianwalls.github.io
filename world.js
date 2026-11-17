@@ -76,6 +76,7 @@ export const STOP_PROGRESS = SECTION_IDS.map((_, i) => ((i + 1) * SPACING) / RID
 const LM_AHEAD = 3.5;   // landmark sits a little past where the rider stops
 const LM_BACK = 11;     // and this far off the far side of the trail
 
+const TRAIL_LIFT = 0.07; // how far the dirt ribbon sits above the terrain
 const trailZ = (x) => 3.2 * Math.sin(x * 0.018) + 1.6 * Math.sin(x * 0.047 + 1.3);
 const trailY = (x) => 0.9 * Math.sin(x * 0.03) + 0.5 * Math.sin(x * 0.071 + 2);
 const trailSlopeZ = (x) => (trailZ(x + 0.05) - trailZ(x - 0.05)) / 0.1;
@@ -243,7 +244,7 @@ export async function createWorld({ canvas, quality }) {
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(0xcfe3ea, 70, 650);
 
-  const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 3200);
+  const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.3, 3200);
   const GLOW = glowTexture();
 
   /* ---------- per-frame animators ---------- */
@@ -454,7 +455,9 @@ export async function createWorld({ canvas, quality }) {
       const px = -s / len, pz = 1 / len;
       for (const [o, c] of [[-half, edge], [0, dirt], [half, edge]]) {
         const vx = x + px * o, vz = trailZ(x) + pz * o;
-        pos.push(vx, terrainHeight(vx, vz) + 0.05 + (o === 0 ? 0.015 : 0), vz);
+        // sits clearly above the ground instead of relying on a depth offset, which
+        // would also let it draw over the tyres resting on it
+        pos.push(vx, terrainHeight(vx, vz) + TRAIL_LIFT + (o === 0 ? 0.015 : 0), vz);
         tmp.copy(c).multiplyScalar(0.92 + rnd() * 0.14);
         col.push(tmp.r, tmp.g, tmp.b);
       }
@@ -468,7 +471,7 @@ export async function createWorld({ canvas, quality }) {
     g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
     g.setIndex(idx);
     g.computeVertexNormals();
-    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 }));
     m.receiveShadow = true;
     scene.add(m);
   }
@@ -2061,7 +2064,11 @@ export async function createWorld({ canvas, quality }) {
     motionOk = !reducedMotion;
 
     /* --- rider on the trail --- */
-    const by = trailY(s) + 0.05;
+    // rest both wheels on the trail: height and pitch come from where the two
+    // tyres actually touch, not from a single point under the cranks
+    const AXLE = 0.9; // half the wheelbase, at the bike's scale
+    const rearY = trailY(s - AXLE), frontY = trailY(s + AXLE);
+    const by = (rearY + frontY) / 2 + TRAIL_LIFT + 0.03;
     bike.group.position.set(s, by, trailZ(s));
     // riding back down the trail turns the bike round to face the way it is going
     if (speed < -1.2) facing = -1;
@@ -2073,7 +2080,7 @@ export async function createWorld({ canvas, quality }) {
     bike.group.rotation.set(
       Math.sin(turned * Math.PI) * 0.28,                             // leans through the turn
       -Math.atan(trailSlopeZ(s)) + turned * Math.PI,
-      Math.atan(trailSlopeY(s)) * Math.cos(turned * Math.PI),
+      Math.atan((frontY - rearY) / (AXLE * 2)) * Math.cos(turned * Math.PI),
       "YZX"
     );
     for (const w of bike.wheels) w.rotation.z = -odo / 0.35;
@@ -2086,7 +2093,7 @@ export async function createWorld({ canvas, quality }) {
     }
     if (wasAirborne && hopY === 0) emitDust(bike.group.position, 14, 1.6);
     wasAirborne = hopY > 0;
-    const bob = reducedMotion ? 0 : Math.sin(s * 1.6) * 0.012 * smooth(0.2, 3, Math.abs(speed));
+    const bob = reducedMotion ? 0 : Math.abs(Math.sin(s * 1.6)) * 0.012 * smooth(0.2, 3, Math.abs(speed)); // only ever upward
     bike.pivot.position.y = hopY + bob;
     bike.pivot.rotation.z = Math.min(hopY * 0.55, 0.4);
     if (bike.rider.root) bike.rider.root.position.y = Math.sin(s * 3.2) * 0.012;
@@ -2242,7 +2249,7 @@ export async function createWorld({ canvas, quality }) {
     bike.lampMat.emissiveIntensity *= 1 - off;
     walker.group.visible = off > 0.004;
     if (walker.group.visible) {
-      const start = tmpA.set(bike.group.position.x + 0.35, bike.group.position.y, bike.group.position.z - 0.75);
+      const start = tmpA.set(bike.group.position.x + 0.35, bike.group.position.y - 0.03, bike.group.position.z - 0.75);
       const walk = clamp((seat - 0.1) / 0.5, 0, 1);       // to the front of the bench
       const turn = smooth(0.6, 0.8, seat);                // turn round and back up to it
       const sit = smooth(0.78, 1, seat);
