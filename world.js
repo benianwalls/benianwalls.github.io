@@ -1455,7 +1455,7 @@ export async function createWorld({ canvas, quality }) {
       head.position.copy(headC);
       head.rotation.z = -0.12; // eyes on the trail ahead
       const helmet = add("helmet", blob(0.13, "#ff7a3d"));
-      helmet.position.copy(headC).add(new THREE.Vector3(0, 0.012, 0));
+      helmet.position.copy(headC);
       helmet.rotation.z = -0.12;
 
       // arms reach to the grips
@@ -1559,7 +1559,7 @@ export async function createWorld({ canvas, quality }) {
       headC.set(0, chest.y + 0.2, chest.z + 0.03);
       placeLimb(neck, a.copy(chest).setY(chest.y + 0.03), headC, LEFT);
       head.position.copy(headC);
-      helmet.position.set(0, headC.y + 0.012, headC.z);
+      helmet.position.set(0, headC.y, headC.z);
 
       for (const leg of legs) {
         const ph = phase + (leg.side > 0 ? 0 : Math.PI);

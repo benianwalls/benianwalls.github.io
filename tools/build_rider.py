@@ -36,6 +36,8 @@ DARK = material("dark", 0x1C1F24, 0.6)
 PACK = material("pack", 0x2D3436, 0.85)
 HELMET = material("helmet", 0xFF7A3D, 0.4, 0.1)
 WHITE = material("white", 0xF4F6F8, 0.6)
+HAIR = material("hair", 0x1B1512, 0.9)
+LIP = material("lip", 0x6E4029, 0.7)
 
 def finish(obj, mats, subsurf=1, length=None):
     for m in mats:
@@ -151,20 +153,33 @@ t = join("torso", [(torso, JERSEY), (band, JERSEY_TRIM), (pack, PACK), (strapL, 
 t["len"] = 0.59
 
 # ---------------- head ----------------
-skull = ball("skull", 0.105, (0, 0, 0), (1.0, 0.9, 1.1))
-jaw = ball("jaw", 0.075, (0.02, 0, -0.065), (1.0, 0.95, 0.8))
-nose = ball("nose", 0.02, (0.103, 0, -0.015), (1.1, 0.9, 1.2), seg=10)
-earL = ball("earL", 0.022, (-0.005, 0.094, -0.01), (0.7, 0.4, 1.1), seg=10)
-earR = ball("earR", 0.022, (-0.005, -0.094, -0.01), (0.7, 0.4, 1.1), seg=10)
-eyeL = ball("eyeL", 0.013, (0.091, 0.036, 0.018), seg=10)
-eyeR = ball("eyeR", 0.013, (0.091, -0.036, 0.018), seg=10)
-browL = block("browL", (0.012, 0.036, 0.008), (0.095, 0.036, 0.042), bevel=0.003)
-browR = block("browR", (0.012, 0.036, 0.008), (0.095, -0.036, 0.042), bevel=0.003)
-hair = ball("hair", 0.104, (-0.028, 0, 0.03), (0.95, 0.9, 0.98))  # sits back and up so the face stays clear
-join("head", [(skull, SKIN), (jaw, SKIN), (nose, SKIN), (earL, SKIN), (earR, SKIN),
-              (eyeL, DARK), (eyeR, DARK), (browL, DARK), (browR, DARK), (hair, DARK)])
+# one smooth sculpted shape (chin -> jaw -> cheek -> brow -> crown), with small,
+# calm features: stylised characters read best when the face is understated
+skull = loft("skull", [
+    (-0.116, 0.032, 0.032, 0.026), (-0.098, 0.058, 0.05, 0.02), (-0.072, 0.076, 0.068, 0.013),
+    (-0.042, 0.087, 0.078, 0.008), (-0.008, 0.095, 0.085, 0.004), (0.026, 0.099, 0.088, 0.001),
+    (0.06, 0.098, 0.086, -0.003), (0.09, 0.086, 0.076, -0.009), (0.112, 0.058, 0.052, -0.013),
+], seg=18)
+finish(skull, [SKIN], subsurf=2)
+nose = ball("nose", 0.013, (0.099, 0, -0.012), (0.85, 0.85, 1.2), seg=12)
+earL = ball("earL", 0.02, (-0.004, 0.086, 0.002), (0.6, 0.35, 1.0), seg=10)
+earR = ball("earR", 0.02, (-0.004, -0.086, 0.002), (0.6, 0.35, 1.0), seg=10)
+eyeL = ball("eyeL", 0.0085, (0.094, 0.034, 0.02), (0.5, 1.0, 1.2), seg=12)
+eyeR = ball("eyeR", 0.0085, (0.094, -0.034, 0.02), (0.5, 1.0, 1.2), seg=12)
+browL = ball("browL", 0.012, (0.096, 0.035, 0.041), (0.35, 1.3, 0.2), seg=10)
+browR = ball("browR", 0.012, (0.096, -0.035, 0.041), (0.35, 1.3, 0.2), seg=10)
+mouth = ball("mouth", 0.014, (0.089, 0, -0.053), (0.3, 1.45, 0.16), seg=12)
+hair = ball("hair", 0.1, (-0.02, 0, 0.036), (1.0, 0.93, 0.95))
+curls = []
+for i in range(12):  # short curls round the hairline and nape, so some shows under the helmet
+    a = math.pi * (0.32 + 1.36 * i / 11)
+    curls.append(ball(f"curl{i}", 0.02, (-0.02 + math.cos(a) * 0.088, math.sin(a) * 0.082, 0.02 + 0.012 * math.sin(i * 2.1)), seg=8))
+join("head", [(skull, SKIN), (nose, SKIN), (earL, SKIN), (earR, SKIN),
+              (eyeL, DARK), (eyeR, DARK), (browL, HAIR), (browR, HAIR), (mouth, LIP), (hair, HAIR)]
+             + [(c, HAIR) for c in curls])
 
 # ---------------- helmet ----------------
+# sits above the brow, level, with the visor clear of the eyes
 bpy.ops.mesh.primitive_uv_sphere_add(radius=0.128, segments=24, ring_count=14, location=(0, 0, 0))
 shell = bpy.context.active_object
 shell.name = "shell"
@@ -172,7 +187,7 @@ shell.scale = (1.2, 1.0, 0.98)
 bpy.ops.object.transform_apply(scale=True)
 bpy.ops.object.mode_set(mode="EDIT")
 bpy.ops.mesh.select_all(action="SELECT")
-bpy.ops.mesh.bisect(plane_co=(0, 0, 0.012), plane_no=(0.22, 0, 1), clear_inner=True, use_fill=True)
+bpy.ops.mesh.bisect(plane_co=(0, 0, 0.0), plane_no=(-0.1, 0, 1), clear_inner=True, use_fill=True)
 bpy.ops.object.mode_set(mode="OBJECT")
 shell.select_set(False)
 vents = []
@@ -180,13 +195,13 @@ for i, y in enumerate((-0.062, -0.021, 0.021, 0.062)):
     v = ball(f"vent{i}", 0.02, (0.012, y, 0.118 - abs(y) * 0.42), (3.2, 0.45, 0.5), seg=10)
     v.rotation_euler = (math.copysign(0.5, y) * (abs(y) > 0.04) + math.copysign(0.18, y) * (abs(y) <= 0.04), 0, 0)
     vents.append(v)
-rear = ball("rear", 0.02, (-0.125, 0, 0.05), (0.5, 2.2, 1.6), seg=10)
-visor = block("visor", (0.085, 0.17, 0.012), (0.165, 0, 0.022), bevel=0.005, rot=(0, 0.22, 0))
+rear = ball("rear", 0.02, (-0.125, 0, 0.045), (0.5, 2.2, 1.6), seg=10)
+visor = block("visor", (0.075, 0.16, 0.01), (0.168, 0, 0.03), bevel=0.004, rot=(0, -0.12, 0))
 rim = loft("rim", [(0.0, 0.152, 0.127, -0.004), (0.012, 0.154, 0.129, -0.002)], seg=24)
-bpy.context.view_layer.objects.active = rim
-rim.rotation_euler = (0, -0.22, 0)
-rim.location = (0, 0, 0.008)
-join("helmet", [(shell, HELMET), (rim, DARK), (visor, DARK), (rear, DARK)] + [(v, DARK) for v in vents])
+rim.rotation_euler = (0, 0.1, 0)
+rim.location = (0, 0, 0.0)
+helmet = join("helmet", [(shell, HELMET), (rim, DARK), (visor, DARK), (rear, DARK)] + [(v, DARK) for v in vents])
+helmet.location = (-0.006, 0, 0.062)  # lifted so the brow and eyes stay visible
 
 # ---------------- hands, shoes ----------------
 palm = ball("palm", 0.045, (0, 0, 0), (1.15, 0.85, 0.8))
