@@ -246,6 +246,7 @@ export async function createWorld({ canvas, quality }) {
   const GLOW = glowTexture();
 
   /* ---------- per-frame animators ---------- */
+  const snowAmount = { value: 0 }; // 0..1, shared with the terrain shader
   const tickers = [];
   const onTick = (fn) => tickers.push(fn);
 
@@ -422,7 +423,18 @@ export async function createWorld({ canvas, quality }) {
     g.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
     g.setAttribute("color", new THREE.BufferAttribute(col, 3));
     g.computeBoundingSphere();
-    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }));
+    const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true });
+    // winter: snow settles on the flatter faces (steep rock stays bare)
+    terrainMat.onBeforeCompile = (sh) => {
+      sh.uniforms.uSnow = snowAmount;
+      sh.vertexShader = sh.vertexShader
+        .replace("#include <common>", "#include <common>\nvarying float vSnow;")
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvSnow = smoothstep(0.55, 0.85, normal.y);");
+      sh.fragmentShader = sh.fragmentShader
+        .replace("#include <common>", "#include <common>\nuniform float uSnow;\nvarying float vSnow;")
+        .replace("#include <color_fragment>", "#include <color_fragment>\ndiffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.9, 0.93, 0.96), uSnow * vSnow);");
+    };
+    const m = new THREE.Mesh(g, terrainMat);
     m.receiveShadow = true;
     scene.add(m);
   }
@@ -1191,6 +1203,8 @@ export async function createWorld({ canvas, quality }) {
       new THREE.CircleGeometry(LAKE.r * 1.32, 48),
       new THREE.MeshStandardMaterial({ color: 0x3b7fa6, roughness: 0.3, metalness: 0, transparent: true, opacity: 0.88 })
     );
+    const OPEN_WATER = new THREE.Color(0x3b7fa6), ICE = new THREE.Color(0xcfe3ee);
+    onTick(() => { water.material.color.lerpColors(OPEN_WATER, ICE, snowAmount.value); });
     water.rotation.x = -Math.PI / 2;
     water.position.set(LAKE.x, LAKE.y, LAKE.z);
     water.receiveShadow = true;
@@ -1635,6 +1649,91 @@ export async function createWorld({ canvas, quality }) {
     ffGeo.setAttribute("position", new THREE.BufferAttribute(p, 3));
     ffGeo.setAttribute("aPhase", new THREE.BufferAttribute(ph, 1));
   }
+  /* =====================================================
+     SEASONS + WEATHER — autumn (default), summer, winter, rain
+     ===================================================== */
+
+  // falling snow / rain: a box of points that follows the camera, animated on the GPU
+  const WX_N = q.mobile ? 700 : 1500;
+  const wxGeo = new THREE.BufferGeometry();
+  {
+    const seed = new Float32Array(WX_N * 3);
+    for (let i = 0; i < seed.length; i++) seed[i] = Math.random();
+    wxGeo.setAttribute("position", new THREE.BufferAttribute(seed, 3));
+  }
+  const wxMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 }, uCentre: { value: new THREE.Vector3() }, uScale: { value: 300 },
+      uFall: { value: 2 }, uSize: { value: 0.12 }, uSway: { value: 0.6 }, uOpacity: { value: 0 }, uStreak: { value: 0 },
+    },
+    vertexShader: `
+      uniform float uTime, uScale, uFall, uSize, uSway;
+      uniform vec3 uCentre;
+      varying float vFade;
+      void main() {
+        vec3 box = vec3(64.0, 28.0, 44.0);
+        vec3 p = position * box;
+        p.y -= uTime * uFall * (0.7 + position.x * 0.6);
+        p.x += uTime * uFall * 0.12 + sin(uTime * 1.1 + position.y * 40.0) * uSway;
+        p.z += cos(uTime * 0.9 + position.x * 40.0) * uSway;
+        vec3 wp = uCentre + mod(p - uCentre, box) - box * 0.5; // stays put in the world, wraps round the camera
+        vec4 mv = viewMatrix * vec4(wp, 1.0);
+        gl_Position = projectionMatrix * mv;
+        gl_PointSize = uSize * uScale / max(-mv.z, 0.5);
+        vFade = smoothstep(1.0, 6.0, -mv.z);
+      }`,
+    fragmentShader: `
+      uniform float uOpacity, uStreak;
+      varying float vFade;
+      void main() {
+        vec2 c = gl_PointCoord - 0.5;
+        float flake = 1.0 - smoothstep(0.25, 0.5, length(c));
+        float drop = (1.0 - smoothstep(0.03, 0.07, abs(c.x))) * (1.0 - gl_PointCoord.y);
+        float a = mix(flake, drop, uStreak) * uOpacity * vFade;
+        if (a < 0.01) discard;
+        gl_FragColor = vec4(mix(vec3(1.0), vec3(0.82, 0.88, 0.95), uStreak), a);
+      }`,
+    transparent: true, depthWrite: false,
+  });
+  const weather = new THREE.Points(wxGeo, wxMat);
+  weather.frustumCulled = false;
+  weather.visible = false;
+  scene.add(weather);
+
+  const LEAVES = {
+    autumn: null, // the colours the trees were planted with
+    summer: [0x4f8a3a, 0x5f9a40, 0x6e9f3c, 0x3f7d35, 0x74a845, 0x558f3c],
+  };
+  const SNOW_WHITE = new THREE.Color(0xf2f5f7);
+  let sceneName = "autumn", snowTo = 0, rainTo = 0, rain = 0;
+
+  function setScene(name) {
+    if (!["autumn", "summer", "winter", "rain"].includes(name)) name = "autumn";
+    sceneName = name;
+    snowTo = name === "winter" ? 1 : 0;
+    rainTo = name === "rain" ? 1 : 0;
+    const c = new THREE.Color();
+    // [pines, leafy, rocks, bushes]: how much snow sits on each in winter
+    const snowOn = [0.3, 0.8, 0.3, 0.65];
+    props.forEach((set, k) => {
+      const mesh = set.meshes[0];
+      // hacker mode parks the tint attribute; write to wherever it currently lives
+      const parked = !mesh.instanceColor;
+      if (parked) mesh.instanceColor = mesh.userData.origTint;
+      set.items.forEach((it, i) => {
+        c.copy(it.color);
+        if (k === 1 && LEAVES[name]) c.setHex(LEAVES[name][i % LEAVES[name].length]);
+        if (name === "winter") c.lerp(SNOW_WHITE, snowOn[k]);
+        if (name === "rain") c.multiplyScalar(0.82);
+        mesh.setColorAt(i, c);
+      });
+      mesh.instanceColor.needsUpdate = true;
+      if (parked) { mesh.userData.origTint = mesh.instanceColor; mesh.instanceColor = null; }
+    });
+  }
+  const RAIN_SKY = { top: new THREE.Color(0x66747e), hor: new THREE.Color(0xa7b1b6), fog: new THREE.Color(0x98a3a8) };
+  const SNOW_SKY = { top: new THREE.Color(0xb9cfde), hor: new THREE.Color(0xeef3f6), fog: new THREE.Color(0xe6edf1) };
+
   const ffMat = new THREE.ShaderMaterial({
     uniforms: { uTime: { value: 0 }, uNight: { value: 0 }, uScale: { value: 300 } },
     vertexShader: `
@@ -1852,17 +1951,51 @@ export async function createWorld({ canvas, quality }) {
      RESIZE
      ===================================================== */
 
+  /* Adaptive resolution: the scene is drawn at `q.dpr * resScale` device pixels.
+     If frames run slow the scale steps down; after a calm spell it tries one
+     step back up, waiting longer each time that fails. */
+  let resScale = 1, frameMs = 16, sinceChange = 0, retryAfter = 6, lastStepUp = false;
+  {
+    // very large canvases (4K and up) start below full resolution
+    const px = window.innerWidth * window.innerHeight * q.dpr * q.dpr;
+    if (px > 4.2e6) resScale = Math.max(0.6, Math.sqrt(4.2e6 / px));
+  }
+  function applyResolution() {
+    renderer.setPixelRatio(q.dpr * resScale);
+    composer?.setPixelRatio(q.dpr * resScale);
+    resize();
+  }
+  function governResolution(rawDt) {
+    if (rawDt > 0.12) return; // tab was throttled or just woke: not a GPU signal
+    frameMs = lerp(frameMs, rawDt * 1000, 0.06);
+    sinceChange += rawDt;
+    if (sinceChange < 1.2) return;
+    if (frameMs > 21 && resScale > 0.55) {
+      if (lastStepUp) retryAfter = Math.min(60, retryAfter * 2); // that step up was too much
+      resScale = Math.max(0.55, resScale - 0.12);
+      lastStepUp = false;
+      sinceChange = 0;
+      applyResolution();
+    } else if (frameMs < 17.5 && resScale < 1 && sinceChange > retryAfter) {
+      resScale = Math.min(1, resScale + 0.08);
+      lastStepUp = true;
+      sinceChange = 0;
+      applyResolution();
+    }
+  }
+
   function resize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     composer?.setSize(w, h);
-    const scale = h * q.dpr * 0.5;
+    const scale = h * q.dpr * resScale * 0.5;
     dustMat.uniforms.uScale.value = scale;
     ffMat.uniforms.uScale.value = scale;
+    wxMat.uniforms.uScale.value = scale;
   }
-  resize();
+  applyResolution();
 
   /* =====================================================
      FRAME
@@ -1881,7 +2014,7 @@ export async function createWorld({ canvas, quality }) {
   let off = 0;  // 0 rider on the bike, 1 the walking figure has taken over
   let facing = 1, turned = 0, odo = 0; // which way the bike points; how far it has rolled
   let introT = 0;
-  let lastS = 0;
+  let lastS = 0, speedS = 0;
   let time = 0;
   let hoverFrame = 0;
   const projected = new THREE.Vector3();
@@ -1890,14 +2023,18 @@ export async function createWorld({ canvas, quality }) {
     if (hopY === 0 && seat < 0.5) hopV = 4.4;
   }
 
-  function frame({ progress, dt, popupId, reducedMotion, labels }) {
+  function frame({ progress, dt, rawDt = dt, popupId, reducedMotion, labels }) {
     time += dt;
     introT = Math.min(1, introT + dt / 1.7);
     const intro = reducedMotion ? 1 : 1 - Math.pow(1 - introT, 3);
 
     const s = progress * RIDE_LEN - (1 - intro) * 16;
-    const speed = dt > 0 ? (s - lastS) / dt : 0;
+    const rawSpeed = dt > 0 ? (s - lastS) / dt : 0;
     lastS = s;
+    // everything that reacts to speed (camera, dust, lean) uses a smoothed value
+    speedS = Math.abs(rawSpeed) > 200 ? rawSpeed : damp(speedS, rawSpeed, 12, dt);
+    const speed = speedS;
+    governResolution(rawDt);
     const night = smooth(0.55, 0.9, progress);   // lamps and windows stay lit to the end
     const dawn = smooth(0.945, 1, progress);     // first light over the last stretch
     const dark = night * (1 - dawn);             // what the sky itself is doing
@@ -1916,7 +2053,7 @@ export async function createWorld({ canvas, quality }) {
     if (introT < 1) facing = 1;
     turned = reducedMotion ? +(facing < 0) : damp(turned, facing < 0 ? 1 : 0, 8, dt);
     const heading = turned < 0.5 ? 1 : -1;
-    odo += speed * dt * heading; // distance rolled in the bike's own forward direction
+    odo += rawSpeed * dt * heading; // distance rolled in the bike's own forward direction
     bike.group.rotation.set(
       Math.sin(turned * Math.PI) * 0.28,                             // leans through the turn
       -Math.atan(trailSlopeZ(s)) + turned * Math.PI,
@@ -1959,6 +2096,34 @@ export async function createWorld({ canvas, quality }) {
 
     /* --- sky, sun, light --- */
     palette(progress, pal);
+    // weather drifts in and out rather than switching
+    snowAmount.value = damp(snowAmount.value, snowTo, 1.6, dt);
+    rain = damp(rain, rainTo, 1.6, dt);
+    const snowy = snowAmount.value, lightLeft = 1 - night * 0.85;
+    if (rain > 0.002) {
+      pal.top.lerp(RAIN_SKY.top, rain * 0.7 * lightLeft);
+      pal.hor.lerp(RAIN_SKY.hor, rain * 0.7 * lightLeft);
+      pal.fog.lerp(RAIN_SKY.fog, rain * 0.75 * lightLeft);
+      pal.sunI *= 1 - rain * 0.5;
+      pal.hemi *= 1 - rain * 0.12;
+    }
+    if (snowy > 0.002) {
+      pal.top.lerp(SNOW_SKY.top, snowy * 0.35 * lightLeft);
+      pal.hor.lerp(SNOW_SKY.hor, snowy * 0.5 * lightLeft);
+      pal.fog.lerp(SNOW_SKY.fog, snowy * 0.55 * lightLeft);
+    }
+    const falling = hacked ? 0 : Math.max(rain, snowy);
+    weather.visible = falling > 0.01;
+    if (weather.visible) {
+      const u = wxMat.uniforms, wet = rain > snowy ? 1 : 0;
+      u.uTime.value = time;
+      u.uOpacity.value = falling * (wet ? 0.5 : 0.9);
+      u.uStreak.value = wet;
+      u.uFall.value = wet ? 26 : 2.2;
+      u.uSize.value = wet ? 0.9 : 0.13;
+      u.uSway.value = wet ? 0 : 0.7;
+      camera.getWorldDirection(u.uCentre.value).multiplyScalar(16).add(camera.position);
+    }
     const el = lerp(lerp(0.62, -0.1, smooth(0.0, 0.82, progress)), 0.25, dawn);
     const az = lerp(lerp(0.55, -0.45, progress), -0.62, dawn);
     const sunDir = tmpB.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)).normalize();
@@ -1967,10 +2132,10 @@ export async function createWorld({ canvas, quality }) {
     skyMat.uniforms.uBot.value.copy(pal.fog).multiplyScalar(0.6);
     skyMat.uniforms.uSunDir.value.copy(sunDir);
     skyMat.uniforms.uSunCol.value.copy(pal.sun);
-    skyMat.uniforms.uSunVis.value = Math.max(1 - smooth(0.7, 0.86, progress), dawn);
+    skyMat.uniforms.uSunVis.value = Math.max(1 - smooth(0.7, 0.86, progress), dawn) * (1 - rain);
     scene.fog.color.copy(hacked ? HACK_FOG : pal.fog);
     scene.fog.near = hacked ? 10 : 70;
-    scene.fog.far = hacked ? 140 : 650;
+    scene.fog.far = hacked ? 140 : lerp(650, 360, Math.max(rain, snowy * 0.45));
 
     // the key light comes from over the viewer's shoulder so building fronts
     // stay lit; it lowers and warms as the visible sun sets
@@ -2143,7 +2308,9 @@ export async function createWorld({ canvas, quality }) {
     sky.position.copy(camera.position);
 
     /* --- hover (desktop, a few times a second) --- */
-    if (!q.touch && ++hoverFrame % 4 === 0) {
+    // only when the pointer has actually moved, and never mid-ride (picking is not free)
+    if (!q.touch && ++hoverFrame % 4 === 0 && pointer.moved && Math.abs(speed) < 6) {
+      pointer.moved = false;
       const info = pointer.inside ? pick(pointer.cx, pointer.cy) : null;
       setHover(info);
     }
@@ -2179,13 +2346,17 @@ export async function createWorld({ canvas, quality }) {
     if (composer) composer.render();
     else renderer.render(scene, camera);
 
-    return { speed, night, sky: pal.top.getHexString() };
+    // how close the rider is to the campfire (for the sound layer)
+    const fireAt = landmarks.leadership.group.position;
+    const fire = clamp(1 - Math.hypot(B.x - (fireAt.x - 6.4), B.z - (fireAt.z + 3.6)) / 28, 0, 1) * Math.max(0.4, night);
+    return { speed, night, sky: pal.top.getHexString(), fire, rain, snow: snowy };
   }
 
   window.addEventListener("pointermove", (e) => {
     pointer.cx = e.clientX;
     pointer.cy = e.clientY;
     pointer.inside = e.target === canvas;
+    pointer.moved = true;
   }, { passive: true });
 
   /* drop quality if the device is struggling */
@@ -2202,7 +2373,7 @@ export async function createWorld({ canvas, quality }) {
   if (location.search.includes("debug")) window.__three = { THREE, scene, renderer, camera, sun, hemi, bike, composer: () => composer };
 
   return {
-    frame, resize, pick, poke, hop, setHacked, collectBadge, addBadge, degrade, activate,
+    frame, resize, pick, poke, hop, setHacked, collectBadge, addBadge, degrade, activate, setScene,
     sectionIds: SECTION_IDS,
   };
 }

@@ -6,6 +6,7 @@
 import { createWorld, SECTION_IDS, STOP_PROGRESS } from "./world.js";
 import { initCoach } from "./coach.js";
 import { icon, mountIcons } from "./icons.js";
+import { createSound } from "./sound.js";
 
 mountIcons();
 
@@ -48,6 +49,43 @@ function measure() {
     sectionScrollTargets[id] = Math.round(STOP_PROGRESS[i] * maxScroll);
   });
 }
+
+/* =====================================================
+   SCENE CONTROLS — sound, and the season / weather picker
+   ===================================================== */
+
+const sound = createSound();
+const soundBtn = document.getElementById("sound-btn");
+soundBtn.addEventListener("click", () => {
+  const on = !sound.enabled;
+  sound.setEnabled(on); // off by default, and never remembered: sound is always the visitor's choice
+  soundBtn.setAttribute("aria-pressed", String(on));
+  soundBtn.title = on ? "Sound on" : "Sound off";
+  soundBtn.innerHTML = icon(on ? "volume" : "mute");
+});
+
+const SCENE_ICONS = { autumn: "leaf", summer: "sun", winter: "snow", rain: "rain" };
+const sceneBtn = document.getElementById("scene-btn");
+const sceneMenu = document.getElementById("scene-menu");
+let sceneChoice = SCENE_ICONS[localStorage.getItem("scene")] ? localStorage.getItem("scene") : "autumn";
+
+function setScene(name) {
+  sceneChoice = name;
+  localStorage.setItem("scene", name);
+  sceneBtn.innerHTML = icon(SCENE_ICONS[name]);
+  for (const b of sceneMenu.children) b.setAttribute("aria-checked", String(b.dataset.scene === name));
+  world?.setScene(name);
+}
+function toggleSceneMenu(open) {
+  sceneMenu.hidden = !open;
+  sceneBtn.setAttribute("aria-expanded", String(open));
+}
+sceneBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleSceneMenu(sceneMenu.hidden); });
+sceneMenu.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-scene]");
+  if (b) { setScene(b.dataset.scene); toggleSceneMenu(false); }
+});
+document.addEventListener("click", () => toggleSceneMenu(false));
 
 /* =====================================================
    LANDMARK LABELS — HTML tags pinned over the 3D buildings
@@ -101,6 +139,7 @@ function openPopup(id) {
   // the address bar follows the open stop, so the link can be copied and shared
   if (LM_LABELS[id]) history.replaceState(null, "", "#" + id);
   world?.activate(id, true); // the building comes alive behind its card
+  sound.play(id === "experience" ? "plane" : "card");
   document.body.style.overflow = "hidden";
   p.querySelector(".popup-close")?.focus({ preventScroll: true });
 }
@@ -223,7 +262,7 @@ document.addEventListener("click", (e) => {
   if (hit.type === "landmark") return openPopup(hit.id);
   if (hit.type === "badge") return collectBadge(hit.id, e);
   if (hit.type === "sign") return scrollToSection(hit.id);
-  if (hit.type === "biker") return world.hop();
+  if (hit.type === "biker") { sound.play("hop"); return world.hop(); }
   world.poke(hit); // trees shake, rocks bounce
 });
 
@@ -238,6 +277,7 @@ function collectBadge(id, e) {
   if (collected.has(id)) return;
   collected.add(id);
   world.collectBadge(id);
+  sound.play("coin");
 
   const f = document.createElement("div");
   f.className = "floater";
@@ -351,6 +391,7 @@ navLinks.forEach((a) =>
 
 let target = window.scrollY;
 let current = target;
+let scrollVel = 0;
 
 window.addEventListener("scroll", () => {
   target = window.scrollY;
@@ -543,15 +584,27 @@ function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
 
-  current = reducedMotion ? target : lerp(current, target, 1 - Math.exp(-5.2 * dt));
-  if (Math.abs(current - target) < 0.05) current = target;
+  // Critically damped spring toward the scroll position. Unlike a plain lerp it
+  // carries velocity, so mouse-wheel notches blend into one glide instead of
+  // a start-stop pulse per notch.
+  if (reducedMotion) { current = target; scrollVel = 0; }
+  else {
+    const omega = 2 / 0.2, x = omega * dt;
+    const decay = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
+    const change = current - target;
+    const temp = (scrollVel + omega * change) * dt;
+    scrollVel = (scrollVel - omega * temp) * decay;
+    current = target + (change + temp) * decay;
+    if (Math.abs(current - target) < 0.05 && Math.abs(scrollVel) < 1) { current = target; scrollVel = 0; }
+  }
   const progress = clamp(current / maxScroll, 0, 1);
 
-  const { night, sky } = world.frame({ progress, dt, popupId: openId, reducedMotion, labels: labelEls });
+  const { night, sky, speed, fire, rain, snow } = world.frame({ progress, dt, rawDt: (now - prevNow) / 1000, popupId: openId, reducedMotion, labels: labelEls });
   // phone browsers tint their toolbar with the page's theme colour: keep it matched to the sky
   if (sky !== lastSky) { lastSky = sky; themeMeta?.setAttribute("content", "#" + sky); }
   document.body.classList.toggle("night", night > 0.5);
 
+  sound.update({ speed, night, fire, rain, snow });
   els.progress.style.width = (progress * 100).toFixed(2) + "%";
   updateEnding(progress, dt);
   updateNav(current);
@@ -602,6 +655,7 @@ function openFromHash() {
   const y = sectionScrollTargets[id];
   if (y != null) {
     target = current = y;
+      scrollVel = 0;
     window.scrollTo(0, y);
   }
   openPopup(id);
@@ -641,6 +695,8 @@ async function init() {
   SECTION_IDS.forEach((id, i) => {
     if (!collected.has(id)) world.addBadge(id, i);
   });
+
+  setScene(sceneChoice);
 
   // returning trail masters keep their unlock
   if (localStorage.getItem("trailMaster") === "1") {

@@ -905,6 +905,65 @@ body.hacked .quick-list li { border-color: #00ff88; }
 @media (max-width: 640px) { .finish-links { grid-template-columns: 1fr; } }
 body.hacked .finish-list .ico { color: #00ff88; }
 
+/* ============ SCENE CONTROLS (sound, season) ============ */
+#scene-ctl {
+  position: fixed;
+  left: 18px; bottom: 18px;
+  z-index: 60;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.ctl-btn {
+  width: 42px; height: 42px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius);
+  background: rgba(251, 250, 246, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--ink);
+  font-size: 1.05rem;
+  cursor: pointer;
+  box-shadow: var(--shadow), 0 0 0 1px rgba(20, 35, 26, 0.08);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.ctl-btn:hover, .ctl-btn[aria-expanded="true"], .ctl-btn[aria-pressed="true"] { background: var(--ink); color: #fff; }
+#scene-menu {
+  position: absolute;
+  left: 0; bottom: 52px;
+  display: grid;
+  gap: 2px;
+  padding: 5px;
+  min-width: 150px;
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow), 0 0 0 1px rgba(20, 35, 26, 0.08);
+}
+#scene-menu[hidden] { display: none; }
+#scene-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+#scene-menu button .ico { color: var(--orange-ink); }
+#scene-menu button:hover { background: var(--paper-2); }
+#scene-menu button[aria-checked="true"] { background: var(--ink); color: #fff; }
+#scene-menu button[aria-checked="true"] .ico { color: var(--orange); }
+body.hacked .ctl-btn, body.hacked #scene-menu { background: #04140c; color: #7dffb0; box-shadow: 0 0 0 1px #1f8f4f; }
+body.hacked #scene-menu button { color: #7dffb0; }
+@media (max-width: 640px) { #scene-ctl { left: 12px; bottom: 12px; } }
+
 /* ============ RECRUITER COACH ============ */
 #coach {
   position: fixed;

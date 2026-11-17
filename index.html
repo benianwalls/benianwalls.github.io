@@ -87,6 +87,18 @@
 <button id="hack-toggle" class="mono" hidden>ENTER HACKER MODE</button>
 <div id="scanlines" aria-hidden="true"></div>
 
+<!-- scene controls: sound on/off and the season / weather picker -->
+<div id="scene-ctl">
+  <div id="scene-menu" role="menu" aria-label="Season and weather" hidden>
+    <button role="menuitemradio" data-scene="autumn"><svg class="ico" aria-hidden="true"><use href="#i-leaf"/></svg>Autumn</button>
+    <button role="menuitemradio" data-scene="summer"><svg class="ico" aria-hidden="true"><use href="#i-sun"/></svg>Summer</button>
+    <button role="menuitemradio" data-scene="winter"><svg class="ico" aria-hidden="true"><use href="#i-snow"/></svg>Winter</button>
+    <button role="menuitemradio" data-scene="rain"><svg class="ico" aria-hidden="true"><use href="#i-rain"/></svg>Rain</button>
+  </div>
+  <button id="scene-btn" class="ctl-btn" aria-haspopup="menu" aria-expanded="false" aria-label="Season and weather" title="Season and weather"><svg class="ico" aria-hidden="true"><use href="#i-leaf"/></svg></button>
+  <button id="sound-btn" class="ctl-btn" aria-pressed="false" aria-label="Sound" title="Sound off"><svg class="ico" aria-hidden="true"><use href="#i-mute"/></svg></button>
+</div>
+
 <!-- all-badges-collected toast -->
 <div id="toast">
   <strong>Trail master</strong>
