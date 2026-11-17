@@ -10,6 +10,7 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { COIN_GLYPHS } from "./icons.js";
 
 /* ---------- helpers ---------- */
@@ -1321,6 +1322,48 @@ export async function createWorld({ canvas, quality }) {
      THE RIDER — bike + body, legs driven by two-bone IK
      ===================================================== */
 
+  /* ---------- the rider's body parts (sculpted in Blender: tools/build_rider.py) ----------
+     Limbs are modelled along +y from their start joint, `userData.len` metres long,
+     with their front toward +x. If the model can't be loaded, plain shapes stand in. */
+  const PARTS = {};
+  try {
+    const gltf = await new GLTFLoader().loadAsync("assets/models/rider.glb");
+    for (const name of ["torso", "neck", "head", "helmet", "upperarm", "forearm", "hand", "thigh", "shin", "shoe"]) {
+      const o = gltf.scene.getObjectByName(name);
+      if (o) PARTS[name] = o;
+    }
+  } catch (err) {
+    console.warn("rider model unavailable; using simple shapes", err);
+  }
+  function part(name, fallback) {
+    const o = PARTS[name] ? PARTS[name].clone() : fallback();
+    o.position.set(0, 0, 0);
+    o.rotation.set(0, 0, 0);
+    o.scale.set(1, 1, 1);
+    o.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+    return o;
+  }
+  const stick = (r, color) => () => {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 10).translate(0, 0.5, 0), mat(color, { flatShading: false }));
+    m.userData.len = 1;
+    return m;
+  };
+  const blob = (r, color) => () => new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), mat(color, { flatShading: false }));
+
+  /* run a limb from joint a to joint b; `side` picks which way its front (+x) faces: front = side x direction */
+  const SIDE = new THREE.Vector3(0, 0, 1), BACK = new THREE.Vector3(0, 0, -1);
+  const _lx = new THREE.Vector3(), _ly = new THREE.Vector3(), _lz = new THREE.Vector3(), _lm = new THREE.Matrix4();
+  function placeLimb(o, a, b, side) {
+    _ly.subVectors(b, a);
+    const len = _ly.length();
+    _ly.divideScalar(len || 1);
+    _lx.crossVectors(side, _ly).normalize();
+    _lz.crossVectors(_lx, _ly);
+    o.quaternion.setFromRotationMatrix(_lm.makeBasis(_lx, _ly, _lz));
+    o.position.copy(a);
+    o.scale.set(1, len / (o.userData.len || 1), 1);
+  }
+
   function buildBike(withRider) {
     const k = 0.34 / 26; // the old SVG's units -> metres
     const P = (x, y, z = 0) => new THREE.Vector3((x - 100) * k, (131 - y) * k, z);
@@ -1394,65 +1437,43 @@ export async function createWorld({ canvas, quality }) {
 
     const rider = {};
     if (withRider) {
-      const skin = mat("#9c6644", { flatShading: false, roughness: 0.7 });
-      const jersey = mat("#2563a8", { flatShading: false, roughness: 0.75 });
-      const shorts = mat("#1f2a36", { flatShading: false, roughness: 0.8 });
-      const helmetMat = mat("#ff7a3d", { flatShading: false, roughness: 0.4, metalness: 0.1 });
       const hip = P(80, 54.5);
       const shoulder = P(120, 34);
       const R = new THREE.Group();
       body.add(R);
       rider.root = R;
+      const add = (name, fallback) => { const o = part(name, fallback); R.add(o); return o; };
 
-      // torso + pack
-      tube(R, 0.13, jersey, hip, shoulder, 12);
-      for (const p of [hip, shoulder]) {
-        const j = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), jersey));
-        j.position.copy(p);
-        R.add(j);
-      }
-      const pack = shadowed(new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.1, 0.24), mat("#2d3436")));
-      pack.position.copy(hip).lerp(shoulder, 0.55).add(new THREE.Vector3(-0.04, 0.13, 0));
-      pack.rotation.z = Math.atan2(shoulder.y - hip.y, shoulder.x - hip.x);
-      R.add(pack);
-
-      // head + helmet
+      // torso (with pack), neck, head and helmet
+      placeLimb(add("torso", stick(0.13, "#2563a8")), hip, shoulder, BACK);
       const headC = P(133, 25);
-      tube(R, 0.05, skin, shoulder.clone().add(new THREE.Vector3(0.04, 0.05, 0)), headC, 8);
-      const head = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), skin));
+      placeLimb(add("neck", stick(0.05, "#9c6644")), shoulder.clone().add(new THREE.Vector3(0.03, 0.04, 0)), headC, SIDE);
+      const head = add("head", blob(0.11, "#9c6644"));
       head.position.copy(headC);
-      R.add(head);
-      const helmet = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.128, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), helmetMat));
-      helmet.position.copy(headC).add(new THREE.Vector3(-0.01, 0.015, 0));
-      helmet.rotation.z = -0.35;
-      helmet.scale.set(1.12, 1, 1);
-      R.add(helmet);
-      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.015, 0.2), mat("#1c1f24"));
-      visor.position.copy(headC).add(new THREE.Vector3(0.12, 0.06, 0));
-      visor.rotation.z = -0.25;
-      R.add(visor);
+      head.rotation.z = -0.12; // eyes on the trail ahead
+      const helmet = add("helmet", blob(0.13, "#ff7a3d"));
+      helmet.position.copy(headC).add(new THREE.Vector3(0, 0.012, 0));
+      helmet.rotation.z = -0.12;
 
       // arms reach to the grips
       for (const side of [1, -1]) {
-        const sh = shoulder.clone().setZ(0.17 * side);
+        const sh = shoulder.clone().add(new THREE.Vector3(-0.01, -0.02, 0.17 * side));
         const hand = P(147, 47, 0.3 * side);
         const elbow = sh.clone().lerp(hand, 0.5).add(new THREE.Vector3(-0.03, -0.08, 0.05 * side));
-        tube(R, 0.055, jersey, sh, sh.clone().lerp(elbow, 0.55), 8);
-        tube(R, 0.045, skin, sh.clone().lerp(elbow, 0.5), elbow, 8);
-        tube(R, 0.04, skin, elbow, hand, 8);
-        const glove = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), mat("#1c1f24")));
+        placeLimb(add("upperarm", stick(0.055, "#2563a8")), sh, elbow, SIDE);
+        placeLimb(add("forearm", stick(0.042, "#9c6644")), elbow, hand, SIDE);
+        const glove = add("hand", blob(0.045, "#1c1f24"));
         glove.position.copy(hand);
-        R.add(glove);
+        glove.rotation.z = -0.5;
       }
 
       // legs (posed every frame)
       rider.legs = [1, -1].map((side) => ({
         side,
         hip: hip.clone().setZ(0.1 * side),
-        thigh: tube(R, 0.07, shorts, null, null, 10),
-        shin: tube(R, 0.052, skin, null, null, 10),
-        knee: R.add(shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), skin))).children.at(-1),
-        shoe: R.add(shadowed(new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.07, 0.09), mat("#1c1f24")))).children.at(-1),
+        thigh: add("thigh", stick(0.07, "#1f2a36")),
+        shin: add("shin", stick(0.052, "#9c6644")),
+        shoe: add("shoe", () => new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.07, 0.09), mat("#1c1f24"))),
       }));
     }
 
@@ -1470,7 +1491,7 @@ export async function createWorld({ canvas, quality }) {
       return k1x > k2x ? knee2.set(k1x, k1y) : knee2.set(k2x, k2y);
     }
 
-    const foot = new THREE.Vector3(), knee = new THREE.Vector3();
+    const foot = new THREE.Vector3(), knee = new THREE.Vector3(), ankle = new THREE.Vector3();
     function setCrank(angle) {
       for (const c of crank) {
         const a = -angle + (c.side < 0 ? Math.PI : 0);
@@ -1479,12 +1500,14 @@ export async function createWorld({ canvas, quality }) {
         c.pedal.position.copy(foot);
         if (rider.legs) {
           const leg = rider.legs.find((l) => l.side === c.side);
-          const kk = solveKnee(leg.hip.x, leg.hip.y, foot.x, foot.y);
+          // the ball of the foot is over the pedal, so the ankle sits a little behind and above it
+          ankle.set(foot.x - 0.075, foot.y + 0.1, foot.z);
+          const kk = solveKnee(leg.hip.x, leg.hip.y, ankle.x, ankle.y);
           knee.set(kk.x, kk.y, 0.12 * c.side);
-          placeBetween(leg.thigh, leg.hip, knee);
-          placeBetween(leg.shin, knee, foot.clone().add(new THREE.Vector3(0, 0.04, 0)));
-          leg.knee.position.copy(knee);
-          leg.shoe.position.copy(foot).add(new THREE.Vector3(0.02, 0.045, 0));
+          placeLimb(leg.thigh, leg.hip, knee, SIDE);
+          placeLimb(leg.shin, knee, ankle, SIDE);
+          leg.shoe.position.set(ankle.x, ankle.y - 0.045, ankle.z);
+          leg.shoe.rotation.z = -0.12 + Math.sin(a) * 0.18; // the foot rocks through the pedal stroke
         }
       }
     }
@@ -1499,47 +1522,41 @@ export async function createWorld({ canvas, quality }) {
   let walker = null;
   const BENCH = { seat: new THREE.Vector3(), front: new THREE.Vector3(), yaw: 0 }; // where the walker ends up
   function buildWalker() {
-    const skin = mat("#9c6644", { flatShading: false, roughness: 0.7 });
-    const jersey = mat("#2563a8", { flatShading: false, roughness: 0.75 });
-    const shorts = mat("#1f2a36", { flatShading: false, roughness: 0.8 });
-    const dark = mat("#1c1f24");
     const g = new THREE.Group();
     const R = new THREE.Group(); // modelled at rider scale
     R.scale.setScalar(1.25);
     g.add(R);
-    const limb = (r, m, seg = 10) => tube(R, r, m, null, null, seg);
-    const ball = (r, m) => { const b = shadowed(new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), m)); R.add(b); return b; };
+    const add = (name, fallback) => { const o = part(name, fallback); R.add(o); return o; };
+    const FACE = -Math.PI / 2; // parts are modelled facing +x; the walker faces +z
+    const LEFT = new THREE.Vector3(1, 0, 0), RIGHT = new THREE.Vector3(-1, 0, 0);
 
-    const torso = limb(0.13, jersey, 12), hipB = ball(0.13, jersey), chestB = ball(0.13, jersey);
-    const neck = limb(0.05, skin, 8), head = ball(0.11, skin);
-    const helmet = shadowed(new THREE.Mesh(new THREE.SphereGeometry(0.128, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat("#ff7a3d", { flatShading: false, roughness: 0.4, metalness: 0.1 })));
-    helmet.rotation.x = 0.2;
-    helmet.scale.set(1, 1, 1.12);
-    R.add(helmet);
-    const pack = shadowed(new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.34, 0.1), mat("#2d3436")));
-    R.add(pack);
+    const torso = add("torso", stick(0.13, "#2563a8"));
+    const neck = add("neck", stick(0.05, "#9c6644"));
+    const head = add("head", blob(0.11, "#9c6644"));
+    const helmet = add("helmet", blob(0.13, "#ff7a3d"));
+    head.rotation.y = helmet.rotation.y = FACE;
     const legs = [1, -1].map((side) => {
-      const shoe = shadowed(new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.21), dark));
-      R.add(shoe);
-      return { side, thigh: limb(0.07, shorts), shin: limb(0.052, skin), knee: ball(0.06, skin), shoe };
+      const shoe = add("shoe", () => new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.07, 0.09), mat("#1c1f24")));
+      shoe.rotation.y = FACE;
+      return { side, thigh: add("thigh", stick(0.07, "#1f2a36")), shin: add("shin", stick(0.052, "#9c6644")), shoe };
     });
-    const arms = [1, -1].map((side) => ({ side, upper: limb(0.055, jersey, 8), fore: limb(0.042, skin, 8), hand: ball(0.045, dark) }));
+    const arms = [1, -1].map((side) => {
+      const hand = add("hand", blob(0.045, "#1c1f24"));
+      hand.rotation.set(0, FACE, -1.2, "YZX");
+      return { side, upper: add("upperarm", stick(0.055, "#2563a8")), fore: add("forearm", stick(0.042, "#9c6644")), hand };
+    });
 
     const hip = new THREE.Vector3(), chest = new THREE.Vector3(), headC = new THREE.Vector3();
     const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), d = new THREE.Vector3();
     function pose(sit, phase, stride) {
       const L = (stand, seat) => stand + (seat - stand) * sit;
-      hip.set(0, L(0.95, 0.6), 0);
-      chest.set(0, L(1.47, 1.12), L(0.04, 0.1));
-      placeBetween(torso, hip, chest);
-      hipB.position.copy(hip);
-      chestB.position.copy(chest);
-      headC.set(0, chest.y + 0.21, chest.z + 0.05);
-      placeBetween(neck, a.copy(chest).setY(chest.y + 0.04), headC);
+      hip.set(0, L(0.97, 0.62), 0);
+      chest.set(0, L(1.5, 1.15), L(0.03, 0.1));
+      placeLimb(torso, hip, chest, LEFT);
+      headC.set(0, chest.y + 0.2, chest.z + 0.03);
+      placeLimb(neck, a.copy(chest).setY(chest.y + 0.03), headC, LEFT);
       head.position.copy(headC);
-      helmet.position.set(0, headC.y + 0.015, headC.z - 0.01);
-      pack.position.set(0, (hip.y + chest.y) / 2 + 0.04, (hip.z + chest.z) / 2 - 0.15);
-      pack.rotation.x = L(0.08, 0.18);
+      helmet.position.set(0, headC.y + 0.012, headC.z);
 
       for (const leg of legs) {
         const ph = phase + (leg.side > 0 ? 0 : Math.PI);
@@ -1547,23 +1564,22 @@ export async function createWorld({ canvas, quality }) {
         const flex = (0.5 - 0.5 * Math.cos(ph + 0.9)) * stride * 1.2;      // knee bends as the leg swings through
         a.set(0.1 * leg.side, hip.y, L(0, 0.02));                          // hip joint
         b.set(a.x, a.y - 0.46 * Math.cos(swing), 0.46 * Math.sin(swing));  // knee, standing
-        c.set(b.x, b.y - 0.45 * Math.cos(swing - flex), b.z + 0.45 * Math.sin(swing - flex)); // ankle, standing
-        b.lerp(d.set(0.13 * leg.side, 0.56, 0.46), sit);
-        c.lerp(d.set(0.14 * leg.side, 0.1, 0.52), sit);
-        placeBetween(leg.thigh, a, b);
-        placeBetween(leg.shin, b, c);
-        leg.knee.position.copy(b);
-        leg.shoe.position.set(c.x, c.y - 0.01, c.z + 0.06);
+        c.set(b.x, b.y - 0.43 * Math.cos(swing - flex), b.z + 0.43 * Math.sin(swing - flex)); // ankle, standing
+        b.lerp(d.set(0.13 * leg.side, 0.58, 0.46), sit);
+        c.lerp(d.set(0.14 * leg.side, 0.14, 0.5), sit);
+        placeLimb(leg.thigh, a, b, RIGHT);
+        placeLimb(leg.shin, b, c, RIGHT);
+        leg.shoe.position.set(c.x, Math.max(c.y - 0.03, 0.05), c.z + 0.03);
       }
       for (const arm of arms) {
         const swing = -Math.sin(phase + (arm.side > 0 ? 0 : Math.PI)) * stride * 0.8;
-        a.set(0.17 * arm.side, chest.y - 0.02, chest.z);                   // shoulder
+        a.set(0.175 * arm.side, chest.y - 0.04, chest.z);                  // shoulder
         b.set(a.x + 0.03 * arm.side, a.y - 0.27 * Math.cos(swing), a.z + 0.27 * Math.sin(swing)); // elbow, standing
         c.set(b.x, b.y - 0.25 * Math.cos(swing + 0.25), b.z + 0.25 * Math.sin(swing + 0.25));     // hand, standing
-        b.lerp(d.set(0.22 * arm.side, 0.82, 0.22), sit);
-        c.lerp(d.set(0.13 * arm.side, 0.64, 0.42), sit);                   // forearms rest on the knees
-        placeBetween(arm.upper, a, b);
-        placeBetween(arm.fore, b, c);
+        b.lerp(d.set(0.22 * arm.side, 0.84, 0.22), sit);
+        c.lerp(d.set(0.13 * arm.side, 0.66, 0.42), sit);                   // forearms rest on the knees
+        placeLimb(arm.upper, a, b, RIGHT);
+        placeLimb(arm.fore, b, c, RIGHT);
         arm.hand.position.copy(c);
       }
     }

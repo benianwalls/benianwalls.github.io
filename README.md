@@ -31,6 +31,9 @@ python3 -m http.server 4173
 - `style.css` — colors, cards, labels, layout. Palette lives in `:root` at the top
 - `script.js` — UI: popups, dock, tour, badges, hacker mode, scroll → ride progress
 - `world.js` — the 3D world: terrain, props, landmark buildings, rider, sky, camera
+- `sound.js` — optional synthesised sound (off by default)
+- `assets/models/rider.glb` — the rider's body parts, sculpted in Blender. Rebuild with
+  `/Applications/Blender.app/Contents/MacOS/Blender -b --python tools/build_rider.py`
 - `icons.js` — the one line-icon set (UI icons and the glyphs engraved on the 3D coins)
 - `coach.js` + `coach/knowledge.md` — the recruiter coach and the facts it answers from
 
